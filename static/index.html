@@ -1,0 +1,2616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DQWO 库房物资管理系统 v1.0</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<style>
+  /* ========== 全局重置 ========== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; font-size: 14px; }
+  body { background: #F0F2F5; color: #1a1a1a; }
+
+  /* ========== 颜色变量 ========== */
+  :root {
+    --primary: #1a6fc4;
+    --primary-light: #e8f0fb;
+    --success: #1a9e5c;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --bg: #F0F2F5;
+    --sidebar: #001529;
+    --sidebar-hover: #0d2540;
+    --sidebar-active: #1a6fc4;
+    --white: #ffffff;
+    --border: #e5e7eb;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --card-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  /* ========== 布局 ========== */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ========== 侧边栏 ========== */
+  .sidebar {
+    width: 210px; background: var(--sidebar); color: #c8d3e0;
+    display: flex; flex-direction: column; flex-shrink: 0;
+    transition: width 0.2s;
+  }
+  .logo {
+    padding: 14px 12px 12px; border-bottom: 1px solid #0d2540;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .logo-icon { font-size: 26px; color: #4da6ff; }
+  .logo-text { font-size: 13px; font-weight: 600; color: #fff; line-height: 1.3; text-align: center; }
+  .logo-sub { font-size: 10px; color: #6b8aad; text-align: center; }
+  nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .nav-group-label {
+    font-size: 10px; letter-spacing: 1px; color: #4a6178;
+    padding: 12px 20px 4px; text-transform: uppercase;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px; cursor: pointer; color: #a8b9cc;
+    transition: all 0.15s; font-size: 13.5px;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+  .nav-item.active { background: var(--sidebar-active); color: #fff; border-left-color: #4da6ff; }
+  .nav-item i { font-size: 17px; flex-shrink: 0; }
+  .sidebar-bottom {
+    padding: 12px 16px; border-top: 1px solid #0d2540; flex-shrink: 0;
+  }
+  .user-card {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    padding: 6px 4px; border-radius: 8px;
+  }
+  .user-card:hover { background: #0d2540; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; flex-shrink: 0;
+  }
+  .avatar.admin { background: #1a6fc4; color: #fff; }
+  .avatar.user { background: #1a9e5c; color: #fff; }
+  .user-name { font-size: 13px; font-weight: 500; color: #e0e8f0; }
+  .user-role { font-size: 11px; color: #6b8aad; }
+  .logout-btn { margin-left: auto; color: #4a6178; cursor: pointer; font-size: 17px; }
+  .logout-btn:hover { color: #dc2626; }
+
+  /* ========== 主内容区 ========== */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 12px; flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .topbar-title { font-size: 16px; font-weight: 600; flex: 1; }
+  .breadcrumb { font-size: 12px; color: var(--text-muted); }
+
+  .content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ========== 卡片 ========== */
+  .card {
+    background: var(--white); border-radius: 10px;
+    border: 1px solid var(--border); padding: 18px 20px;
+    margin-bottom: 16px; box-shadow: var(--card-shadow);
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .card-title i { font-size: 17px; color: var(--primary); }
+
+  /* ========== 统计卡片 ========== */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+  .stat-card {
+    background: var(--white); border-radius: 10px; padding: 16px 18px;
+    border: 1px solid var(--border); box-shadow: var(--card-shadow);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .stat-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    flex-shrink: 0;
+  }
+  .stat-icon.blue { background: #e8f0fb; color: #1a6fc4; }
+  .stat-icon.green { background: #e6f7ed; color: #1a9e5c; }
+  .stat-icon.orange { background: #fef3c7; color: #d97706; }
+  .stat-icon.red { background: #fee2e2; color: #dc2626; }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+  .stat-value { font-size: 24px; font-weight: 700; line-height: 1; }
+
+  /* ========== 按钮 ========== */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 7px; font-size: 13px;
+    cursor: pointer; border: 1px solid var(--border); background: var(--white);
+    color: var(--text); transition: all 0.15s; font-family: inherit;
+  }
+  .btn:hover { background: #f5f7fa; }
+  .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn.primary:hover { background: #1558a0; }
+  .btn.success { background: var(--success); color: #fff; border-color: var(--success); }
+  .btn.success:hover { background: #157a48; }
+  .btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .btn.danger:hover { background: #b91c1c; }
+  .btn.sm { padding: 4px 10px; font-size: 12px; }
+  .btn.xs { padding: 2px 8px; font-size: 11px; }
+
+  /* ========== 表单 ========== */
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+  .required-mark { color: var(--danger); margin-left: 2px; }
+  input, select, textarea {
+    width: 100%; padding: 8px 11px;
+    border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; color: var(--text); background: var(--white);
+    font-family: inherit; transition: border 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,111,196,0.1);
+  }
+
+  /* ========== 表格 ========== */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; padding: 9px 12px;
+    background: #f8fafc; color: var(--text-muted);
+    font-size: 12px; font-weight: 600;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid #f3f4f6; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbfc; }
+
+  /* ========== 标签 ========== */
+  .badge {
+    display: inline-flex; align-items: center; padding: 2px 9px;
+    border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap;
+  }
+  .badge.ok { background: #e6f7ed; color: #1a9e5c; }
+  .badge.low { background: #fef3c7; color: #b45309; }
+  .badge.empty { background: #fee2e2; color: #dc2626; }
+  .badge.in { background: #e8f0fb; color: #1a6fc4; }
+  .badge.out { background: #fef3c7; color: #b45309; }
+  .badge.admin { background: #f0e8fb; color: #7c3aed; }
+  .badge.stopped { background: #f3f4f6; color: #9ca3af; }
+
+  /* ========== 搜索栏 ========== */
+  .search-bar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+  .search-bar input { flex: 1; }
+  .search-bar select { width: 130px; }
+
+  /* ========== 模态框 ========== */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 1000;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 12px; padding: 24px;
+    width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .modal-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .modal-close { cursor: pointer; color: var(--text-muted); font-size: 20px; }
+  .modal-close:hover { color: var(--danger); }
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 8px;
+    margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
+  }
+
+  /* ========== 登录页 ========== */
+  .login-screen {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #001529 0%, #0d2f52 50%, #1a6fc4 100%);
+    display: flex; align-items: center; justify-content: center; z-index: 2000;
+  }
+  .login-box {
+    background: rgba(255,255,255,0.97); border-radius: 16px;
+    padding: 36px 40px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .login-logo { text-align: center; margin-bottom: 24px; }
+  .login-logo i { font-size: 48px; color: var(--primary); }
+  .login-logo h1 { font-size: 20px; font-weight: 700; margin-top: 8px; }
+  .login-logo p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .login-tabs {
+    display: flex; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border); margin-bottom: 20px;
+  }
+  .login-tab {
+    flex: 1; text-align: center; padding: 8px;
+    cursor: pointer; font-size: 13px; color: var(--text-muted);
+    background: #f8fafc; transition: all 0.15s;
+  }
+  .login-tab.active { background: var(--primary); color: #fff; }
+  .login-form-group { margin-bottom: 14px; }
+  .login-form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
+  .login-btn {
+    width: 100%; padding: 10px; background: var(--primary); color: #fff;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 6px; transition: background 0.15s;
+  }
+  .login-btn:hover { background: #1558a0; }
+  .demo-hint { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 12px; }
+  .login-err { color: var(--danger); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
+
+  /* ========== 图表 ========== */
+  .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { width: 90px; font-size: 12px; color: var(--text-muted); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 20px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+  .bar-val { width: 50px; font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+  .trend-wrap { display: flex; align-items: flex-end; gap: 6px; height: 130px; padding-top: 10px; }
+  .trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .trend-bars { flex: 1; width: 100%; display: flex; align-items: flex-end; gap: 2px; justify-content: center; }
+  .trend-bar { width: 12px; border-radius: 2px 2px 0 0; min-height: 2px; }
+  .trend-label { font-size: 10px; color: var(--text-light); }
+  .trend-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-muted); }
+  .trend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+
+  /* ========== 字段管理 ========== */
+  .field-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);
+  }
+  .field-row + .field-row { margin-top: 6px; }
+  .field-row-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .field-row-type { font-size: 11px; color: var(--text-muted); background: var(--white); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; }
+
+  /* ========== 日志 ========== */
+  .log-row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+  .log-time { color: var(--text-light); white-space: nowrap; flex-shrink: 0; width: 130px; }
+  .log-user { color: var(--primary); width: 70px; flex-shrink: 0; font-weight: 500; }
+  .log-action { color: var(--text); }
+
+  /* ========== 空状态 ========== */
+  .empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty i { font-size: 42px; display: block; margin-bottom: 10px; opacity: 0.35; }
+
+  /* ========== Tab ========== */
+  .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 16px; }
+  .tab { padding: 9px 18px; cursor: pointer; font-size: 13px; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+  /* ========== Toast ========== */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    padding: 12px 18px; border-radius: 9px; font-size: 13px;
+    color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ========== 响应式两列 ========== */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* ========== 汉堡按钮（手机） ========== */
+  .hamb-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+    color: var(--text-muted); border: 1px solid var(--border); background: var(--white);
+    flex-shrink: 0;
+  }
+  .hamb-btn:hover { background: #f5f7fa; }
+
+  /* ========== 侧边栏遮罩 ========== */
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 499;
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ========== 语音输入 ========== */
+  .input-wrap { display: flex; gap: 4px; width: 100%; }
+  .input-wrap input, .input-wrap select, .input-wrap textarea { flex: 1; min-width: 0; }
+  .mic-btn {
+    flex-shrink: 0; padding: 0 10px; height: 36px; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--white); color: var(--text-muted);
+    transition: all 0.15s; font-size: 15px; display: flex; align-items: center;
+  }
+  .mic-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .mic-btn.listening { background: #fee2e2; border-color: var(--danger); color: var(--danger); }
+  @keyframes mic-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .mic-btn.listening { animation: mic-pulse 1s infinite; }
+
+  /* ========== 变更申请 ========== */
+  .cr-item {
+    display: flex; flex-direction: column; gap: 5px;
+    padding: 10px 14px; background: #f8fafc;
+    border-radius: 8px; border: 1px solid var(--border);
+  }
+  .cr-item + .cr-item { margin-top: 6px; }
+  .cr-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    font-size: 12px; color: var(--text-muted); }
+  .cr-desc { font-size: 13px; color: var(--text); }
+  .cr-note { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+  /* ========== 手机端媒体查询 ========== */
+  @media (max-width: 768px) {
+    .hamb-btn { display: flex; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; z-index: 500;
+      transform: translateX(-100%); transition: transform 0.25s;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid .form-group.full { grid-column: 1 / -1; }
+    .modal { width: 95vw !important; padding: 16px; }
+    .content { padding: 12px 14px; }
+    .topbar { padding: 0 14px; }
+    .search-bar { flex-wrap: wrap; }
+    .search-bar select { width: 100%; }
+  }
+  @media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ========== 在线状态 ========== */
+  .online-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    display: inline-block; flex-shrink: 0;
+    background: #1a9e5c; transition: background 0.4s;
+  }
+  .queue-badge {
+    display: none; font-size: 11px; font-weight: 600;
+    background: #fef3c7; color: #b45309;
+    padding: 3px 9px; border-radius: 20px; cursor: pointer;
+    white-space: nowrap; border: 1px solid #fde68a;
+  }
+  .queue-badge:hover { background: #fde68a; }
+
+  .section-divider { margin: 16px 0; border-top: 1px solid var(--border); }
+
+  /* ========== 预警卡片 ========== */
+  .alert-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+  .alert-item:last-child { border-bottom: none; }
+
+  /* ========== 语言切换按钮 ========== */
+  .lang-toggle {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid rgba(255,255,255,0.35); color: #374151 !important;
+    background: rgba(255,255,255,0.95); font-family: inherit; transition: all 0.15s;
+    position: absolute; top: 14px; right: 18px;
+  }
+  .topbar-lang {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid #d1d5db; color: #374151;
+    background: rgba(255,255,255,0.95); font-family: inherit; transition: all 0.15s;
+  }
+  .topbar-lang:hover { border-color: var(--primary); color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- ===== 登录页 ===== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box" style="position:relative">
+    <button class="lang-toggle" id="loginLangBtn" onclick="toggleLang()">🌐 English</button>
+    <div class="login-logo">
+      <img src="/static/DQWO.png" style="height:60px;width:auto;object-fit:contain;display:block;margin:0 auto 8px">
+      <h1 id="loginTitle">DQWO 库房物资管理系统</h1>
+      <p id="loginSubtitle">Warehouse Management System v1.0</p>
+    </div>
+    <div class="login-tabs">
+      <div class="login-tab active" id="loginTabAdmin" onclick="switchLoginTab('admin')">管理员</div>
+      <div class="login-tab" id="loginTabUser" onclick="switchLoginTab('user')">普通用户</div>
+    </div>
+    <div class="login-form-group">
+      <label id="labelLoginUser">账号</label>
+      <input type="text" id="loginUser" value="admin" placeholder="请输入账号" data-ph-zh="请输入账号" data-ph-en="Enter username">
+    </div>
+    <div class="login-form-group">
+      <label id="labelLoginPass">密码</label>
+      <input type="password" id="loginPass" value="123456" placeholder="请输入密码" data-ph-zh="请输入密码" data-ph-en="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()"><span id="loginBtnSpan"><i class="ti ti-login"></i> 登录系统</span></button>
+    <div class="login-err" id="loginErr">账号或密码错误，请重试</div>
+    <div class="demo-hint" id="loginHint">演示账号：admin / 123456 &nbsp;|&nbsp; user / 123456</div>
+  </div>
+</div>
+
+<!-- ===== 主应用 ===== -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="app" id="mainApp" style="display:none">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="/static/DQWO.png" style="height:42px;width:auto;object-fit:contain">
+      <div class="logo-text" id="sidebarLogoText">DQWO 库房管理</div>
+      <div class="logo-sub">WMS v1.0</div>
+    </div>
+    <nav>
+      <div class="nav-group-label" id="navLabelMain">主功能</div>
+      <div class="nav-item active" onclick="goto('dashboard')" data-page="dashboard"><i class="ti ti-dashboard"></i>概览首页</div>
+<div class="nav-item" onclick="goto('entry')" data-page="entry"><i class="ti ti-circle-plus"></i>物资录入</div>
+      <div class="nav-item" onclick="goto('inventory')" data-page="inventory"><i class="ti ti-list-details"></i>库存查询</div>
+      <div class="nav-item" onclick="goto('archive')" data-page="archive"><i class="ti ti-archive"></i>出入库档案</div>
+      <div class="nav-item" onclick="goto('analysis')" data-page="analysis"><i class="ti ti-chart-bar"></i>数据分析</div>
+      <div class="nav-group-label" id="navLabelSys">系统管理</div>
+      <div class="nav-item" onclick="goto('settings')" data-page="settings" style="display:none"><i class="ti ti-settings"></i>系统设置</div>
+      <div class="nav-item admin-only" onclick="goto('logs')" data-page="logs" style="display:none"><i class="ti ti-activity"></i>操作日志</div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="avatar" id="sidebarAvatar">管</div>
+        <div>
+          <div class="user-name" id="sidebarName">管理员</div>
+          <div class="user-role" id="sidebarRole">Administrator</div>
+        </div>
+        <i class="ti ti-logout logout-btn" onclick="logout()" title="退出登录" id="logoutBtn"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <div class="main">
+    <div class="topbar">
+      <button class="hamb-btn" onclick="toggleSidebar()" title="菜单"><i class="ti ti-menu-2"></i></button>
+      <div class="topbar-title" id="topbarTitle">概览首页</div>
+      <div id="topbarExtra"></div>
+      <span class="online-dot" id="onlineDot" title="在线"></span>
+      <span class="queue-badge" id="queueBadge" onclick="processQueue()" title="点击立即同步"></span>
+      <button class="topbar-lang" id="topbarLangBtn" onclick="toggleLang()">🌐 English</button>
+    </div>
+    <div class="content">
+
+      <!-- 概览 -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="ti ti-packages"></i></div>
+            <div><div class="stat-label" id="statLabelTypes">库存品类</div><div class="stat-value" id="s-types">0</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="ti ti-stack"></i></div>
+            <div><div class="stat-label" id="statLabelTotal">库存总量</div><div class="stat-value" id="s-total">0</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange"><i class="ti ti-alert-triangle"></i></div>
+            <div><div class="stat-label" id="statLabelWarn">预警品类</div><div class="stat-value" id="s-warn">0</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="ti ti-brand-databricks"></i></div>
+            <div><div class="stat-label" id="statLabelToday">今日操作</div><div class="stat-value" id="s-today">0</div></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-alert-triangle" style="color:#d97706"></i><span id="warnCardTitle">低库存预警</span></div>
+            <div id="warnList"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-clock"></i><span id="recentCardTitle">最近操作记录</span></div>
+            <div id="recentList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 录入 -->
+      <div class="page" id="page-entry">
+        <div class="tabs">
+          <div class="tab active" data-tab="in" onclick="switchEntryTab('in')">入库录入</div>
+          <div class="tab" data-tab="out" onclick="switchEntryTab('out')">出库登记</div>
+        </div>
+        <div class="card" id="entryCard">
+          <div class="card-title" id="entryCardTitle"><i class="ti ti-package"></i>填写入库信息</div>
+          <div class="form-grid" id="entryFormFields"></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn primary" id="entrySubmitBtn" onclick="submitEntry()"><i class="ti ti-check"></i><span>提交入库</span></button>
+            <button class="btn" onclick="clearEntry()"><i class="ti ti-refresh"></i><span>清空</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 库存查询 -->
+      <div class="page" id="page-inventory">
+        <div class="card">
+          <div class="search-bar">
+            <input type="text" id="invSearch" placeholder="🔍 搜索名称、编码、类别..." oninput="renderInventory()">
+            <select id="invCat" onchange="renderInventory()"><option value="">全部类别</option></select>
+            <select id="invStatus" onchange="renderInventory()">
+              <option value="">全部状态</option>
+              <option value="ok">库存正常</option>
+              <option value="low">库存偏低</option>
+              <option value="empty">已缺货</option>
+            </select>
+            <button class="btn" onclick="openScan('invSearch')" title="扫码搜索"><i class="ti ti-scan"></i></button>
+            <button class="btn" id="btnExport" onclick="exportCSV()"><i class="ti ti-download"></i><span>导出CSV</span></button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead id="invHead"></thead>
+              <tbody id="invBody"></tbody>
+            </table>
+          </div>
+          <div id="invCount" style="font-size:12px;color:var(--text-muted);margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- 档案 -->
+      <div class="page" id="page-archive">
+        <div class="card">
+          <div class="search-bar">
+            <input type="text" id="archSearch" placeholder="🔍 搜索物资名称或操作人..." oninput="renderArchive()">
+            <select id="archType" onchange="renderArchive()">
+              <option value="" id="archTypeAll">全部类型</option>
+              <option value="in" id="archTypeIn">入库</option>
+              <option value="out" id="archTypeOut">出库</option>
+            </select>
+            <input type="date" id="archDate" onchange="renderArchive()">
+            <button class="btn" id="btnArchExport" onclick="exportArchiveCSV()"><i class="ti ti-download"></i><span id="btnArchExportLbl">导出CSV</span></button>
+          </div>
+          <div id="archCount" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></div>
+          <div class="table-wrap">
+            <table>
+              <thead id="archHead"><tr><th>时间</th><th>操作类型</th><th>物资名称</th><th>编码</th><th>数量</th><th>操作人</th><th>领取人</th><th>备注</th></tr></thead>
+              <tbody id="archBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分析 -->
+      <div class="page" id="page-analysis">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-chart-bar"></i><span id="analysisTop8Title">库存量 Top 8</span></div>
+            <div class="bar-chart" id="stockChart"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-category"></i><span id="analysisCatTitle">类别库存分布</span></div>
+            <div class="bar-chart" id="catChart"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-trending-up"></i><span id="analysisTrendTitle">近 7 日出入库趋势</span></div>
+          <div class="trend-wrap" id="trendChart"></div>
+          <div class="trend-legend">
+            <span><span class="trend-dot" style="background:#1a6fc4"></span><span id="legendInSpan">入库</span></span>
+            <span><span class="trend-dot" style="background:#d97706"></span><span id="legendOutSpan">出库</span></span>
+          </div>
+        </div>
+        <div class="three-col">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-arrow-down"></i><span id="analysisTotalInTitle">总入库量</span></div>
+            <div style="font-size:28px;font-weight:700;color:var(--primary)" id="totalIn">0</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-arrow-up"></i><span id="analysisTotalOutTitle">总出库量</span></div>
+            <div style="font-size:28px;font-weight:700;color:var(--warning)" id="totalOut">0</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-coins"></i><span id="analysisTotalValTitle">库存总价值（估）</span></div>
+            <div style="font-size:28px;font-weight:700;color:var(--success)" id="totalVal">¥0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 设置 -->
+      <div class="page" id="page-settings">
+
+        <!-- ── 普通用户只读视图 ── -->
+        <div id="userSettingsView" style="display:none"></div>
+
+        <!-- ── 管理员完整视图 ── -->
+        <div id="adminSettingsView">
+
+        <!-- 待处理申请（管理员专属） -->
+        <div class="card" id="pendingReqsCard" style="display:none">
+          <div class="card-header">
+            <div class="card-title"><i class="ti ti-bell" style="color:#d97706"></i><span id="pendingReqsTitle">待处理变更申请</span></div>
+          </div>
+          <div id="pendingReqsList"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="ti ti-list"></i><span><span id="fldMgmtTitle">物资字段管理</span></div>
+            <button class="btn primary sm" id="btnAddFieldEl" onclick="openAddField()"><i class="ti ti-plus"></i><span>添加字段</span></button>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+            <span id="fldNoteEl">核心字段不可删除。自定义字段可随时添加/删除，删除后已录入数据的该字段值将保留但不显示。</span>
+          </div>
+          <div id="fieldList"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="ti ti-users"></i><span><span id="userMgmtTitle">账号管理</span></div>
+            <button class="btn primary sm" id="btnAddUserEl" onclick="openAddUser()"><i class="ti ti-user-plus"></i><span>添加账号</span></button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>账号ID</th><th>姓名</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody id="userTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Excel 批量导入卡片 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="ti ti-file-import" style="color:#1a9e5c"></i><span id="importCardTitle">Excel 批量导入</span></div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="importCardNote">
+            第一行为标题行，列名须与录入字段名完全一致。支持 .xlsx / .xls 格式。
+          </div>
+          <div class="tabs" id="importTabs" style="margin-bottom:12px">
+            <div class="tab active" data-import="inventory" onclick="switchImportTab('inventory')" id="importTabInventory">库存物资</div>
+            <div class="tab" data-import="users" onclick="switchImportTab('users')" id="importTabUsers">用户账号</div>
+          </div>
+          <div id="importPreview" style="margin-bottom:10px"></div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn" onclick="downloadTemplate()">
+              <i class="ti ti-download"></i><span id="btnDownloadTplTxt">下载模板</span>
+            </button>
+            <label class="btn primary" style="cursor:pointer">
+              <i class="ti ti-upload"></i><span id="btnImportTxt">选择文件导入</span>
+              <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(this)">
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="ti ti-adjustments"></i><span><span id="cfgTitleEl">系统参数配置</span></div>
+          <div class="form-grid" style="margin-top:10px">
+            <div class="form-group"><label class="form-label" id="cfgWarehouseLbl">仓库名称</label><input type="text" id="cfgWarehouseName" oninput="saveConfig()"></div>
+            <div class="form-group"><label class="form-label" id="cfgThreshLbl">库存预警阈值（件）</label><input type="number" id="cfgWarnThresh" min="0" oninput="saveConfig()"></div>
+            <div class="form-group"><label class="form-label" id="cfgUnitLbl">默认库存单位</label><input type="text" id="cfgUnit" oninput="saveConfig()"></div>
+          </div>
+        </div>
+
+        </div><!-- /adminSettingsView -->
+      </div>
+
+      <!-- 日志 -->
+      <div class="page" id="page-logs">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="ti ti-activity"></i><span id="logsTitleEl">操作日志</span></div>
+            <button class="btn sm danger" id="clearLogsBtnEl" onclick="clearLogs()"><i class="ti ti-trash"></i><span>清空日志</span></button>
+          </div>
+          <div id="logContainer"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- 模态：添加字段 -->
+<div class="modal-overlay" id="modalField">
+  <div class="modal">
+    <div class="modal-title"><span id="fldModalTitle">添加自定义字段</span> <i class="ti ti-x modal-close" onclick="closeModal('modalField')"></i></div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group"><label class="form-label"><span id="fldNameLbl">字段名称</span> <span class="required-mark">*</span></label><input type="text" id="fldName" placeholder="如：产地、颜色" data-ph-zh="如：产地、颜色" data-ph-en="e.g. Origin, Color"></div>
+      <div class="form-group"><label class="form-label" id="fldTypeLbl">字段类型</label>
+        <select id="fldType">
+          <option id="fldTypeText" value="text">文本</option>
+          <option id="fldTypeNum" value="number">数字</option>
+          <option id="fldTypeDate" value="date">日期</option>
+          <option id="fldTypeSel" value="select">下拉选择</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label" id="fldOptsLbl">下拉选项（逗号分隔，仅下拉类型需填）</label><input type="text" id="fldOptions" placeholder="选项A,选项B,选项C"></div>
+      <div class="form-group"><label class="form-label" id="fldReqLbl">是否必填</label><select id="fldRequired"><option id="fldReqNo" value="0">否</option><option id="fldReqYes" value="1">是</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="fldCancelBtn" onclick="closeModal('modalField')">取消</button>
+      <button class="btn primary" id="fldConfirmBtn" onclick="addField()"><i class="ti ti-check"></i>确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 模态：添加账号 -->
+<div class="modal-overlay" id="modalUser">
+  <div class="modal">
+    <div class="modal-title"><span id="userModalTitle">添加账号</span> <i class="ti ti-x modal-close" onclick="closeModal('modalUser')"></i></div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group"><label class="form-label"><span id="uIdLbl">账号ID</span> <span class="required-mark">*</span></label><input type="text" id="uId" placeholder="登录用账号" data-ph-zh="登录用账号" data-ph-en="Login username"></div>
+      <div class="form-group"><label class="form-label"><span id="uNameLbl">姓名</span> <span class="required-mark">*</span></label><input type="text" id="uName" placeholder="显示名称" data-ph-zh="显示名称" data-ph-en="Display name"></div>
+      <div class="form-group"><label class="form-label"><span id="uPassLbl">密码</span> <span class="required-mark">*</span></label><input type="password" id="uPass" placeholder="初始密码" data-ph-zh="初始密码" data-ph-en="Initial password"></div>
+      <div class="form-group"><label class="form-label" id="uRoleLbl">角色</label>
+        <select id="uRole"><option id="uRoleUser" value="user">普通用户</option><option id="uRoleAdmin" value="admin">管理员</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="userCancelBtn" onclick="closeModal('modalUser')">取消</button>
+      <button class="btn primary" id="userConfirmBtn" onclick="addUser()"><i class="ti ti-check"></i>确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 模态：出库 -->
+<div class="modal-overlay" id="modalOut">
+  <div class="modal">
+    <div class="modal-title"><span id="outModalTitle">出库登记</span> <i class="ti ti-x modal-close" onclick="closeModal('modalOut')"></i></div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group"><label class="form-label" id="outNameLbl">物资名称</label><input type="text" id="outName" readonly></div>
+      <div class="form-group"><label class="form-label" id="outStockLbl">当前库存</label><input type="text" id="outCurStock" readonly></div>
+      <div class="form-group"><label class="form-label"><span id="outQtyLbl">出库数量</span> <span class="required-mark">*</span></label><input type="number" id="outQty" min="1" placeholder="请输入" data-ph-zh="请输入" data-ph-en="Enter qty"></div>
+      <div class="form-group"><label class="form-label" id="outRecipLbl">领用人</label><input type="text" id="outPerson" placeholder="领用人姓名" data-ph-zh="领用人姓名" data-ph-en="Recipient name"></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label" id="outNoteLbl">备注</label><input type="text" id="outNote" placeholder="选填" data-ph-zh="选填" data-ph-en="Optional"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="outCancelBtn" onclick="closeModal('modalOut')">取消</button>
+      <button class="btn primary" id="outConfirmBtn" onclick="doOut()"><i class="ti ti-check"></i>确认出库</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 模态：编辑物资 -->
+<div class="modal-overlay" id="modalEdit">
+  <div class="modal" style="width:600px">
+    <div class="modal-title">
+      <span id="editModalTitle">编辑物资信息</span>
+      <i class="ti ti-x modal-close" onclick="closeModal('modalEdit')"></i>
+    </div>
+    <div class="form-grid" id="editFormFields"></div>
+    <div class="modal-footer">
+      <button class="btn" id="editCancelBtn" onclick="closeModal('modalEdit')">取消</button>
+      <button class="btn primary" id="editSaveBtn" onclick="submitEdit()"><i class="ti ti-check"></i>保存修改</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 模态：Excel 导入预览 -->
+<div class="modal-overlay" id="modalImport">
+  <div class="modal" style="width:700px;max-width:96vw">
+    <div class="modal-title">
+      <span id="importModalTitle">导入预览</span>
+      <i class="ti ti-x modal-close" onclick="closeModal('modalImport')"></i>
+    </div>
+    <div id="importPreviewTable" style="max-height:360px;overflow-y:auto"></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:8px" id="importPreviewCount"></div>
+    <div class="modal-footer">
+      <button class="btn" id="importCancelBtn" onclick="closeModal('modalImport')">取消</button>
+      <button class="btn primary" id="importConfirmBtn" onclick="submitImport()"><i class="ti ti-check"></i>确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 模态：QR / 条形码扫描 -->
+<div class="modal-overlay" id="modalScan">
+  <div class="modal" style="width:360px">
+    <div class="modal-title">
+      <span id="scanModalTitle">扫描二维码 / 条形码</span>
+      <i class="ti ti-x modal-close" onclick="closeScan()"></i>
+    </div>
+    <div id="qr-reader" style="width:100%;border-radius:8px;overflow:hidden;min-height:180px;background:#000"></div>
+    <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:10px" id="scanHintEl">
+      将条码 / 二维码对准摄像头，自动识别
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   模块零：国际化 i18n
+   _lang = 'zh' | 'en'，toggleLang() 一键切换，applyLang() 全量刷新
+   ============================================================ */
+let _lang = localStorage.getItem('wms_lang') || 'zh';
+
+const I18N = {
+  zh: {
+    /* 通用 */
+    cancel:'取消', save:'保存修改', confirm:'确认',PleaseSelect:'-请选择-',
+    loading:'加载中...', optional:'选填', required_mark:'*',
+    /* 登录 */
+    loginTitle:'DQWO 库房物资管理系统', loginSubtitle:'Warehouse Management System v1.0',
+    tabAdmin:'管理员', tabUser:'普通用户',
+    labelUser:'账号', labelPass:'密码',
+    phUser:'请输入账号', phPass:'请输入密码',
+    loginBtn:'登录系统', loginErr:'账号或密码错误，请重试',
+    loginHint:'演示账号：admin / 123456 | user / 123456',
+    langBtn:'🌐 English',
+    sidebarLogo:'DQWO 库房管理', logoutTitle:'退出登录',
+    /* 侧边栏页面标题 */
+    dashboard:'概览首页', entry:'物资录入', inventory:'库存查询',
+    archive:'出入库档案', analysis:'数据分析', settings:'系统设置', logs:'操作日志',
+    navMain:'主功能', navSys:'系统管理',
+    /* 概览 */
+    statTypes:'库存品类', statTotal:'库存总量', statWarn:'预警品类', statToday:'今日操作',
+    warnTitle:'低库存预警', recentTitle:'最近操作记录',
+    warnEmpty:'无预警，库存充足', recentEmpty:'暂无记录',
+    badgeIn:'入库', badgeOut:'出库',
+    /* 录入 */
+    tabIn:'入库录入', tabOut:'出库登记',
+    entryInTitle:'填写入库信息', entryOutTitle:'填写出库信息',
+    submitIn:'提交入库', submitOut:'确认出库', clearBtn:'清空',
+    phSelectItem:'请选择物资',
+    lblSelectItem:'选择物资', lblQty:'出库数量', lblRecipient:'领用人', lblNote:'备注',
+    phQty:'请输入', phRecipient:'领用人姓名',
+    /* 库存 */
+    phInvSearch:'🔍 搜索名称、编码、类别...',
+    allCat:'全部类别', allStatus:'全部状态',
+    sOk:'库存正常', sLow:'库存偏低', sEmpty:'已缺货',
+    btnExport:'导出CSV',
+    thStock:'库存量', thStatus:'状态', thAction:'操作',
+    btnOut:'出库', btnEdit:'编辑', btnDel:'删除',
+    noRecord:'无匹配记录', totalRec:'共 {n} 条记录',
+    /* 档案 */
+    phArchSearch:'🔍 搜索物资名称或操作人...',
+    allTypes:'全部类型', typeIn:'入库', typeOut:'出库',
+    colTime:'时间', colType:'操作类型', colItem:'物资名称',
+    colCode:'编码', colQty:'数量', colOp:'操作人', colReceiver:'领取人', colNote:'备注',
+    btnArchExport:'导出CSV',
+    noArch:'无记录', archBadgeIn:'⬇ 入库', archBadgeOut:'⬆ 出库',
+    /* 分析 */
+    noData:'暂无数据', legendIn:'入库', legendOut:'出库',
+    analysisTop8:'库存量 Top 8', analysisCat:'类别库存分布',
+    analysisTrend:'近 7 日出入库趋势',
+    analysisTotalIn:'总入库量', analysisTotalOut:'总出库量', analysisTotalVal:'库存总价值（估）',
+    /* 设置 */
+    fldMgmt:'物资字段管理', btnAddField:'添加字段',
+    fldNote:'<span id="fldNoteEl">核心字段不可删除。自定义字段可随时添加/删除，删除后已录入数据的该字段值将保留但不显示。</span>',
+    fldRequired:'必填', fldOptional:'选填', fldCore:'核心字段', fldDel:'删除',
+    userMgmt:'账号管理', btnAddUser:'添加账号',
+    thUid:'账号ID', thName:'姓名', thRole:'角色', thStat:'状态', thOp:'操作',
+    roleAdmin:'管理员', roleUser:'普通用户', statusOn:'启用', statusOff:'停用',
+    sysAcct:'系统账号', btnDisable:'停用', btnEnable:'启用',
+    cfgTitle:'系统参数配置', cfgWarehouse:'仓库名称',
+    cfgThresh:'库存预警阈值（件）', cfgUnit:'默认库存单位',
+    /* 日志 */
+    logsTitle:'操作日志', clearLogsBtn:'清空日志', noLogs:'暂无日志',
+    /* 编辑弹窗 */
+    editTitle:'编辑物资信息',
+    /* 出库弹窗 */
+    outTitle:'出库登记', outName:'物资名称', outStock:'当前库存',
+    outQty:'出库数量', outRecipient:'领用人', outNote:'备注',
+    /* 字段弹窗 */
+    addFldTitle:'添加自定义字段', fldName:'字段名称',
+    fldType:'字段类型', fldOpts:'下拉选项（逗号分隔，仅下拉类型需填）',
+    fldOptsPlh:'选项A,选项B,选项C', fldReq:'是否必填',
+    typeText:'文本', typeNum:'数字', typeDate:'日期', typeSel:'下拉选择',
+    yes:'是', no:'否', btnAddFldConfirm:'确认添加',
+    /* 账号弹窗 */
+    addUserTitle:'添加账号', uid:'账号ID', uname:'姓名',
+    upass:'密码', urole:'角色',
+    phUid:'登录用账号', phUname:'显示名称', phUpass:'初始密码',
+    btnAddUserConfirm:'确认添加',
+    /* Toast */
+    toastIn:'入库成功！', toastOut:'出库成功！',
+    toastFieldAdd:'字段已添加', toastFieldDel:'字段已删除',
+    toastUserAdd:'账号已添加', toastUserDel:'账号已删除',
+    toastSave:'配置已保存', toastLogClear:'日志已清空',
+    toastDisabled:'已停用', toastEnabled:'已启用',
+    toastEditOk:'修改已保存', toastDelOk:'物资已删除',
+    /* Confirm */
+    cfmDelField:'确认删除此字段？已有数据的该字段值将保留但不显示。',
+    cfmDelUser:'确认删除账号 ',
+    cfmDelItem:'确认删除该物资？此操作不可撤销。',
+    cfmClearLogs:'确认清空所有日志？',
+    /* Error */
+    errConnect:'无法连接服务器，请检查后端是否启动',
+    errReq:'请求失败', errRequired:' 不能为空',
+    errQtyZero:'入库数量必须 > 0', errSelectItem:'请选择物资',
+    errOutQty:'出库数量必须 > 0', errOutEmpty:'请输入出库数量',
+    errUserInfo:'请填写完整账号信息', errFldName:'字段名称不能为空',
+    noPermission:'您无权限操作此物资',
+    /* 扫码 & 离线 */
+    scanTitle:'扫描二维码/条形码', scanHint:'将条码对准摄像头，自动识别',
+    scanFound:'已存在：{name}，可直接出库',
+    offlineQueued:'网络不可用，操作已缓存，联网后自动同步',
+    syncOk:'{n} 条离线数据已同步', syncFail:'{n} 条同步失败，请检查',
+    queuedTip:'条待同步，点击同步', offlineMode:'服务器离线', onlineMode:'在线',
+    /* 核心字段标签 i18n */
+    fieldLabels:{ name:'物资名称', code:'物资编码', category:'物资类别', spec:'规格型号', unit:'单位', qty:'入库数量', location:'存放位置', supplier:'供应商', price:'单价(元)', expire:'保质期至', note:'备注' },
+    /* 变更申请 */
+    settingsReadOnly:'当前为只读模式，如需修改请提交变更申请',
+    myRequests:'我的申请记录', submitRequest:'提交申请',
+    reqPlaceholder:'请描述您希望修改的内容（如：添加"到期提醒"字段）',
+    reqLimitErr:'待处理申请已达上限（3条），请等管理员处理后再提交',
+    reqSubmitOk:'申请已提交，等待管理员审批', reqCancelOk:'申请已撤销',
+    reqApproveOk:'已批准', reqRejectOk:'已拒绝',
+    pendingReqs:'待处理变更申请', noRequests:'暂无申请',
+    statusPending:'待处理', statusApproved:'已批准', statusRejected:'已拒绝',
+    approveBtn:'批准', rejectBtn:'拒绝', cancelReq:'撤销',
+    adminNoteLabel:'管理员回复', reqNoteTitle:'备注（可选）',
+    readOnlyField:'只读', codeReadOnly:'编码不可修改',
+    /* Excel 导入 */
+    importCardTitle:'Excel 批量导入',
+    importCardNote:'第一行为标题行，列名须与录入字段名完全一致。支持 .xlsx / .xls 格式。',
+    importTabInventory:'库存物资', importTabUsers:'用户账号',
+    btnDownloadTpl:'下载模板', btnImport:'选择文件导入',
+    importModalTitle:'导入预览',
+    importPreviewCount:'{n} 条数据待导入',
+    importConfirmBtn:'确认导入',
+    toastImportOk:'{n} 条数据导入成功',
+    toastImportFail:'导入失败，请检查文件格式',
+    errImportEmpty:'文件内容为空或格式有误',
+    errImportNoSheetJS:'请检查网络，SheetJS 库加载失败',
+  },
+  en: {
+    cancel:'Cancel', save:'Save Changes', confirm:'Confirm', PleaseSelect:'PleaseSelect',
+    loading:'Loading...', optional:'Optional', required_mark:'*',
+    loginTitle:'DQWO Warehouse Management System', loginSubtitle:'仓储物资管理系统 v1.0',
+    tabAdmin:'Admin', tabUser:'Operator',
+    labelUser:'Username', labelPass:'Password',
+    phUser:'Enter username', phPass:'Enter password',
+    loginBtn:'Login', loginErr:'Incorrect username or password',
+    loginHint:'Demo: admin / 123456 | user / 123456',
+    langBtn:'🌐 中文',
+    sidebarLogo:'DQWO Warehouse', logoutTitle:'Logout',
+    dashboard:'Dashboard', entry:'Inbound', inventory:'Inventory',
+    archive:'Records', analysis:'Analytics', settings:'Settings', logs:'Logs',
+    navMain:'Main', navSys:'System',
+    statTypes:'SKU Types', statTotal:'Total Stock', statWarn:'Alerts', statToday:"Today's Ops",
+    warnTitle:'Low Stock Alerts', recentTitle:'Recent Activity',
+    warnEmpty:'No alerts — stock sufficient', recentEmpty:'No recent activity',
+    badgeIn:'In', badgeOut:'Out',
+    tabIn:'Stock In', tabOut:'Stock Out',
+    entryInTitle:'Stock In Form', entryOutTitle:'Stock Out Form',
+    submitIn:'Submit In', submitOut:'Confirm Out', clearBtn:'Clear',
+    phSelectItem:'Select an item',
+    lblSelectItem:'Select Item', lblQty:'Quantity', lblRecipient:'Recipient', lblNote:'Note',
+    phQty:'Enter qty', phRecipient:'Recipient name',
+    phInvSearch:'🔍 Search name, code, category...',
+    allCat:'All Categories', allStatus:'All Status',
+    sOk:'Normal', sLow:'Low Stock', sEmpty:'Out of Stock',
+    btnExport:'Export CSV',
+    thStock:'Stock', thStatus:'Status', thAction:'Action',
+    btnOut:'Out', btnEdit:'Edit', btnDel:'Delete',
+    noRecord:'No records found', totalRec:'Total: {n} records',
+    phArchSearch:'🔍 Search item or operator...',
+    allTypes:'All Types', typeIn:'In', typeOut:'Out',
+    colTime:'Time', colType:'Type', colItem:'Item',
+    colCode:'Code', colQty:'Qty', colOp:'Operator', colReceiver:'Receiver', colNote:'Note',
+    btnArchExport:'Export CSV',
+    noArch:'No records', archBadgeIn:'⬇ In', archBadgeOut:'⬆ Out',
+    noData:'No data', legendIn:'In', legendOut:'Out',
+    analysisTop8:'Stock Top 8', analysisCat:'By Category',
+    analysisTrend:'7-Day In/Out Trend',
+    analysisTotalIn:'Total In', analysisTotalOut:'Total Out', analysisTotalVal:'Est. Total Value',
+    fldMgmt:'Field Management', btnAddField:'Add Field',
+    fldNote:'Core fields cannot be deleted. Custom fields can be added/removed anytime — existing data is retained but hidden.',
+    fldRequired:'Required', fldOptional:'Optional', fldCore:'Core Field', fldDel:'Delete',
+    userMgmt:'User Management', btnAddUser:'Add User',
+    thUid:'User ID', thName:'Name', thRole:'Role', thStat:'Status', thOp:'Action',
+    roleAdmin:'Admin', roleUser:'Operator', statusOn:'Active', statusOff:'Inactive',
+    sysAcct:'System Account', btnDisable:'Disable', btnEnable:'Enable',
+    cfgTitle:'System Config', cfgWarehouse:'Warehouse Name',
+    cfgThresh:'Alert Threshold (pcs)', cfgUnit:'Default Unit',
+    logsTitle:'Operation Logs', clearLogsBtn:'Clear Logs', noLogs:'No logs yet',
+    editTitle:'Edit Item',
+    outTitle:'Stock Out', outName:'Item Name', outStock:'Current Stock',
+    outQty:'Quantity', outRecipient:'Recipient', outNote:'Note',
+    addFldTitle:'Add Custom Field', fldName:'Field Name',
+    fldType:'Field Type', fldOpts:'Options (comma-separated, dropdown only)',
+    fldOptsPlh:'Option A, Option B, Option C', fldReq:'Required',
+    typeText:'Text', typeNum:'Number', typeDate:'Date', typeSel:'Dropdown',
+    yes:'Yes', no:'No', btnAddFldConfirm:'Confirm',
+    addUserTitle:'Add User', uid:'User ID', uname:'Name',
+    upass:'Password', urole:'Role',
+    phUid:'Login username', phUname:'Display name', phUpass:'Initial password',
+    btnAddUserConfirm:'Confirm',
+    toastIn:'Stock In OK!', toastOut:'Stock Out OK!',
+    toastFieldAdd:'Field Added', toastFieldDel:'Field Deleted',
+    toastUserAdd:'User Added', toastUserDel:'User Deleted',
+    toastSave:'Config Saved', toastLogClear:'Logs Cleared',
+    toastDisabled:'Disabled', toastEnabled:'Enabled',
+    toastEditOk:'Changes Saved', toastDelOk:'Item Deleted',
+    cfmDelField:'Delete this field? Existing data will be retained but hidden.',
+    cfmDelUser:'Delete user: ',
+    cfmDelItem:'Delete this item? This cannot be undone.',
+    cfmClearLogs:'Clear all logs?',
+    errConnect:'Cannot connect to server — is the backend running?',
+    errReq:'Request failed', errRequired:' is required',
+    errQtyZero:'Quantity must be > 0', errSelectItem:'Please select an item',
+    errOutQty:'Quantity must be > 0', errOutEmpty:'Please enter quantity',
+    errUserInfo:'Please fill in all required fields', errFldName:'Field name is required',
+    noPermission:'You do not have permission to edit this item',
+    /* Scan & Offline */
+    scanTitle:'Scan QR / Barcode', scanHint:'Point camera at the code — auto-detect',
+    scanFound:'Found: {name} — use Stock Out directly',
+    offlineQueued:'Offline — operation queued, will sync when reconnected',
+    syncOk:'{n} queued items synced', syncFail:'{n} items failed to sync',
+    queuedTip:'pending sync — click to sync', offlineMode:'Server offline', onlineMode:'Online',
+    /* Core field labels i18n */
+    fieldLabels:{ name:'Item Name', code:'Item Code', category:'Category', spec:'Spec/Model', unit:'Unit', qty:'Inbound Qty', location:'Location', supplier:'Supplier', price:'Unit Price(¥)', expire:'Expiry Date', note:'Note' },
+    /* Change Requests */
+    settingsReadOnly:'Read-only mode — submit a request to propose changes',
+    myRequests:'My Requests', submitRequest:'Submit Request',
+    reqPlaceholder:'Describe the change you want (e.g. Add an "Expiry Alert" field)',
+    reqLimitErr:'Max 3 pending requests — please wait for admin to review',
+    reqSubmitOk:'Request submitted, awaiting admin approval', reqCancelOk:'Request cancelled',
+    reqApproveOk:'Approved', reqRejectOk:'Rejected',
+    pendingReqs:'Pending Change Requests', noRequests:'No requests yet',
+    statusPending:'Pending', statusApproved:'Approved', statusRejected:'Rejected',
+    approveBtn:'Approve', rejectBtn:'Reject', cancelReq:'Cancel',
+    adminNoteLabel:"Admin's Reply", reqNoteTitle:'Note (optional)',
+    readOnlyField:'read-only', codeReadOnly:'Code cannot be changed',
+    /* Excel Import */
+    importCardTitle:'Bulk Excel Import',
+    importCardNote:'Row 1 must be a header row with column names matching field labels exactly. Supports .xlsx / .xls.',
+    importTabInventory:'Inventory Items', importTabUsers:'User Accounts',
+    btnDownloadTpl:'Download Template', btnImport:'Select File to Import',
+    importModalTitle:'Import Preview',
+    importPreviewCount:'{n} rows ready to import',
+    importConfirmBtn:'Confirm Import',
+    toastImportOk:'{n} rows imported successfully',
+    toastImportFail:'Import failed — please check file format',
+    errImportEmpty:'File is empty or format is invalid',
+    errImportNoSheetJS:'SheetJS library failed to load — check network',
+  }
+};
+
+function T(k) { return (I18N[_lang] || I18N.zh)[k] ?? (I18N.zh)[k] ?? k; }
+
+/* 全量刷新所有文字 */
+function applyLang() {
+  localStorage.setItem('wms_lang', _lang);
+  const isEn = _lang === 'en';
+
+  // ── 登录页 ──
+  _setTxt('loginTitle',    T('loginTitle'));
+  _setTxt('loginSubtitle', T('loginSubtitle'));
+  _setTxt('loginLangBtn',  T('langBtn'));
+  _setTxt('topbarLangBtn', T('langBtn'));
+  _setTxt('loginTabAdmin', T('tabAdmin'));
+  _setTxt('loginTabUser',  T('tabUser'));
+  _setTxt('labelLoginUser', T('labelUser'));
+  _setTxt('labelLoginPass', T('labelPass'));
+  _setPh('loginUser', T('phUser'));
+  _setPh('loginPass', T('phPass'));
+  _setHTML('loginBtnSpan', `<i class="ti ti-login"></i> ${T('loginBtn')}`);
+  _setTxt('loginHint', T('loginHint'));
+  const errEl = document.getElementById('loginErr');
+  if (errEl) errEl.textContent = T('loginErr');
+
+  // ── 侧边栏 ──
+  _setTxt('sidebarLogoText', T('sidebarLogo'));
+  _setTxt('navLabelMain', T('navMain'));
+  _setTxt('navLabelSys',  T('navSys'));
+  _qsa('.nav-item[data-page]', el => {
+    const p = el.dataset.page;
+    const icon = el.querySelector('i');
+    el.textContent = T(p);
+    if (icon) el.prepend(icon);
+  });
+  const logoutEl = document.getElementById('logoutBtn');
+  if (logoutEl) logoutEl.title = T('logoutTitle');
+
+  // ── Topbar ──
+  const titleEl = document.getElementById('topbarTitle');
+  if (titleEl && titleEl.dataset.page) titleEl.textContent = T(titleEl.dataset.page);
+
+  // ── 概览 ──
+  _setTxt('statLabelTypes', T('statTypes'));
+  _setTxt('statLabelTotal', T('statTotal'));
+  _setTxt('statLabelWarn',  T('statWarn'));
+  _setTxt('statLabelToday', T('statToday'));
+  _setTxt('warnCardTitle',  T('warnTitle'));
+  _setTxt('recentCardTitle',T('recentTitle'));
+
+  // ── 录入 ──
+  _qsa('#page-entry .tab[data-tab]', el => el.textContent = T(el.dataset.tab==='in'?'tabIn':'tabOut'));
+  if (document.getElementById('page-entry').classList.contains('active')) renderEntry();
+
+  // ── 库存 ──
+  _setPh('invSearch', T('phInvSearch'));
+  _setOptTxt('invCatAll',    T('allCat'));
+  _setOptTxt('invStatAll',   T('allStatus'));
+  _setOptTxt('invStatOk',    T('sOk'));
+  _setOptTxt('invStatLow',   T('sLow'));
+  _setOptTxt('invStatEmpty', T('sEmpty'));
+  _setHTML('btnExport', `<i class="ti ti-download"></i>${T('btnExport')}`);
+
+  // ── 档案 ──
+  _setPh('archSearch', T('phArchSearch'));
+  _setOptTxt('archTypeAll', T('allTypes'));
+  _setOptTxt('archTypeIn',  T('typeIn'));
+  _setOptTxt('archTypeOut', T('typeOut'));
+  const archHead = document.querySelector('#page-archive thead tr');
+  if (archHead) archHead.innerHTML = `<th>${T('colTime')}</th><th>${T('colType')}</th><th>${T('colItem')}</th><th>${T('colCode')}</th><th>${T('colQty')}</th><th>${T('colOp')}</th><th>${T('colReceiver')}</th><th>${T('colNote')}</th>`;
+  _setTxt('btnArchExportLbl', T('btnArchExport'));
+
+  // ── 分析 ──
+  _setTxt('legendInSpan',         T('legendIn'));
+  _setTxt('legendOutSpan',        T('legendOut'));
+  _setTxt('analysisTop8Title',    T('analysisTop8'));
+  _setTxt('analysisCatTitle',     T('analysisCat'));
+  _setTxt('analysisTrendTitle',   T('analysisTrend'));
+  _setTxt('analysisTotalInTitle', T('analysisTotalIn'));
+  _setTxt('analysisTotalOutTitle',T('analysisTotalOut'));
+  _setTxt('analysisTotalValTitle',T('analysisTotalVal'));
+
+  // ── 设置 ──
+  _setTxt('fldMgmtTitle',  T('fldMgmt'));
+  _setHTML('btnAddFieldEl',`<i class="ti ti-plus"></i>${T('btnAddField')}`);
+  _setTxt('fldNoteEl',     T('fldNote'));
+  _setTxt('userMgmtTitle', T('userMgmt'));
+  _setHTML('btnAddUserEl', `<i class="ti ti-user-plus"></i>${T('btnAddUser')}`);
+  const userHead = document.querySelector('#page-settings table thead tr');
+  if (userHead) userHead.innerHTML = `<th>${T('thUid')}</th><th>${T('thName')}</th><th>${T('thRole')}</th><th>${T('thStat')}</th><th>${T('thOp')}</th>`;
+  _setTxt('cfgTitleEl',      T('cfgTitle'));
+  _setTxt('cfgWarehouseLbl', T('cfgWarehouse'));
+  _setTxt('cfgThreshLbl',    T('cfgThresh'));
+  _setTxt('cfgUnitLbl',      T('cfgUnit'));
+  // 导入卡片
+  _setTxt('importCardTitle',    T('importCardTitle'));
+  _setTxt('importCardNote',     T('importCardNote'));
+  _setTxt('importTabInventory', T('importTabInventory'));
+  _setTxt('importTabUsers',     T('importTabUsers'));
+  _setTxt('btnDownloadTplTxt',  T('btnDownloadTpl'));
+  _setTxt('btnImportTxt',       T('btnImport'));
+  _setTxt('importModalTitle',   T('importModalTitle'));
+  _setTxt('importCancelBtn',    T('cancel'));
+  _setHTML('importConfirmBtn',  `<i class="ti ti-check"></i>${T('importConfirmBtn')}`);
+
+  // ── 日志 ──
+  _setTxt('logsTitleEl',   T('logsTitle'));
+  _setHTML('clearLogsBtnEl', `<i class="ti ti-trash"></i>${T('clearLogsBtn')}`);
+
+  // ── 模态：出库 ──
+  _setTxt('outModalTitle', T('outTitle'));
+  _setTxt('outNameLbl',    T('outName'));
+  _setTxt('outStockLbl',   T('outStock'));
+  _setTxt('outQtyLbl',     T('outQty'));
+  _setTxt('outRecipLbl',   T('outRecipient'));
+  _setTxt('outNoteLbl',    T('outNote'));
+  _setPh('outQty',         T('phQty'));
+  _setPh('outPerson',      T('phRecipient'));
+  _setPh('outNote',        T('optional'));
+  _setTxt('outCancelBtn',  T('cancel'));
+  _setHTML('outConfirmBtn',`<i class="ti ti-check"></i>${T('submitOut')}`);
+
+  // ── 模态：编辑 ──
+  _setTxt('editModalTitle', T('editTitle'));
+  _setTxt('editCancelBtn',  T('cancel'));
+  _setHTML('editSaveBtn',   `<i class="ti ti-check"></i>${T('save')}`);
+
+  // ── 模态：字段 ──
+  _setTxt('fldModalTitle',  T('addFldTitle'));
+  _setTxt('fldNameLbl',     T('fldName'));
+  _setPh('fldName',         isEn ? 'e.g. Origin, Color' : '如：产地、颜色');
+  _setTxt('fldTypeLbl',     T('fldType'));
+  _setOptTxt('fldTypeText', T('typeText'));
+  _setOptTxt('fldTypeNum',  T('typeNum'));
+  _setOptTxt('fldTypeDate', T('typeDate'));
+  _setOptTxt('fldTypeSel',  T('typeSel'));
+  _setTxt('fldOptsLbl',     T('fldOpts'));
+  _setPh('fldOptions',      T('fldOptsPlh'));
+  _setTxt('fldReqLbl',      T('fldReq'));
+  _setOptTxt('fldReqNo',    T('no'));
+  _setOptTxt('fldReqYes',   T('yes'));
+  _setTxt('fldCancelBtn',   T('cancel'));
+  _setHTML('fldConfirmBtn', `<i class="ti ti-check"></i>${T('btnAddFldConfirm')}`);
+
+  // ── 模态：账号 ──
+  _setTxt('userModalTitle', T('addUserTitle'));
+  _setTxt('uIdLbl',         T('uid'));
+  _setPh('uId',             T('phUid'));
+  _setTxt('uNameLbl',       T('uname'));
+  _setPh('uName',           T('phUname'));
+  _setTxt('uPassLbl',       T('upass'));
+  _setPh('uPass',           T('phUpass'));
+  _setTxt('uRoleLbl',       T('urole'));
+  _setOptTxt('uRoleUser',   T('roleUser'));
+  _setOptTxt('uRoleAdmin',  T('roleAdmin'));
+  _setTxt('userCancelBtn',  T('cancel'));
+  _setHTML('userConfirmBtn',`<i class="ti ti-check"></i>${T('btnAddUserConfirm')}`);
+
+  // ── 模态：扫描 ──
+  _setTxt('scanModalTitle', T('scanTitle'));
+  _setTxt('scanHintEl',     T('scanHint'));
+  // ── 离线状态 ──
+  setOnlineStatus(navigator.onLine);
+  _updateQueueBadge();
+
+  // ── 重渲动态表格 ──
+  if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+  if (document.getElementById('page-archive').classList.contains('active'))   renderArchive();
+  if (document.getElementById('page-settings').classList.contains('active'))  renderSettings();
+  if (document.getElementById('page-logs').classList.contains('active'))      renderLogs();
+  if (document.getElementById('page-analysis').classList.contains('active'))  renderAnalysis();
+}
+
+/* 工具 */
+function _setTxt(id, v)  { const el=document.getElementById(id); if(el) el.textContent=v; }
+function _setHTML(id, v) { const el=document.getElementById(id); if(el) el.innerHTML=v; }
+function _setPh(id, v)   { const el=document.getElementById(id); if(el) el.placeholder=v; }
+function _setOptTxt(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+function _qsa(sel, fn)   { document.querySelectorAll(sel).forEach(fn); }
+/* 返回字段显示标签（优先 i18n 翻译，否则用 DB 存储值） */
+function fieldLabel(f) {
+  const fid = f.id === 'expire_date' ? 'expire' : f.id;
+  return ((I18N[_lang]||I18N.zh).fieldLabels||{})[fid] || f.label;
+}
+
+function toggleLang() {
+  _lang = _lang === 'zh' ? 'en' : 'zh';
+  applyLang();
+}
+
+/* ============================================================
+   模块零·五：离线队列（在 api() 之前初始化，供其引用）
+   ============================================================ */
+let _offlineQueue = [];
+try { _offlineQueue = JSON.parse(localStorage.getItem('wms_q') || '[]'); } catch {}
+
+function _saveQueue() {
+  try { localStorage.setItem('wms_q', JSON.stringify(_offlineQueue)); } catch {}
+}
+function _updateQueueBadge() {
+  const badge = document.getElementById('queueBadge');
+  if (!badge) return;
+  const n = _offlineQueue.length;
+  if (n) {
+    badge.textContent = `⏳ ${n} ${T('queuedTip')}`;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+/* ============================================================
+   模块一：API 层
+   ============================================================ */
+const BASE_URL = 'http://127.0.0.1:8000';
+
+let _token = null;
+let _currentUser = null;
+let _entryTab = 'in';
+let _outTargetId = null;
+let _editTargetId = null;
+let _editItemData = null;
+let _fields = [];
+let _config = {};
+
+async function api(method, path, body = null, showErr = true) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (_token) opts.headers['Authorization'] = 'Bearer ' + _token;
+  if (body)   opts.body = JSON.stringify(body);
+  try {
+    const res  = await fetch(BASE_URL + path, opts);
+    if (res.status === 401) { logout(); return null; }
+    const data = await res.json();
+    if (!res.ok && showErr) { toast(data.detail || T('errReq'), 'err'); return null; }
+    return data;
+  } catch (e) {
+    // 写操作离线时自动入队，GET 报连接错误
+    if (method !== 'GET' && _token) {
+      _offlineQueue.push({ method, path, body, ts: Date.now() });
+      _saveQueue();
+      _updateQueueBadge();
+      if (showErr) toast(T('offlineQueued'), 'warn');
+    } else if (showErr) {
+      toast(T('errConnect'), 'err');
+    }
+    return null;
+  }
+}
+
+const API = {
+  login:      (u,p)    => api('POST','/api/auth/login',{username:u,password:p}),
+  logout:     ()       => api('POST','/api/auth/logout'),
+  fields:     ()       => api('GET', '/api/fields'),
+  addField:   (d)      => api('POST','/api/fields',d),
+  updateField:(id,d)   => api('PUT', `/api/fields/${id}`,d),
+  delField:   (id)     => api('DELETE',`/api/fields/${id}`),
+  inventory:  (p)      => api('GET', '/api/inventory'+toQuery(p)),
+  getItem:    (id)     => api('GET', `/api/inventory/${id}`),
+  addItem:    (d)      => api('POST','/api/inventory',d),
+  updateItem: (id,d)   => api('PUT', `/api/inventory/${id}`,d),
+  deleteItem: (id)     => api('DELETE',`/api/inventory/${id}`),
+  stockOut:   (id,d)   => api('POST',`/api/inventory/${id}/stock-out`,d),
+  stockIn:    (id,d)   => api('POST',`/api/inventory/${id}/stock-in`,d),
+  archive:    (p)      => api('GET', '/api/archive'+toQuery(p)),
+  summary:    ()       => api('GET', '/api/analysis/summary'),
+  stockTop:   ()       => api('GET', '/api/analysis/stock-top'),
+  catDist:    ()       => api('GET', '/api/analysis/category'),
+  trend:      ()       => api('GET', '/api/analysis/trend'),
+  users:      ()       => api('GET', '/api/users'),
+  addUser:    (d)      => api('POST','/api/users',d),
+  updateUser: (id,d)   => api('PUT', `/api/users/${id}`,d),
+  deleteUser: (id)     => api('DELETE',`/api/users/${id}`),
+  config:         ()       => api('GET', '/api/config'),
+  saveConfig:     (d)      => api('PUT', '/api/config',d),
+  logs:           (p)      => api('GET', '/api/logs'+toQuery(p)),
+  clearLogs:      ()       => api('DELETE','/api/logs'),
+  changeReqs:     ()       => api('GET', '/api/change-requests'),
+  submitChangeReq:(d)      => api('POST','/api/change-requests',d),
+  handleChangeReq:(id,d)   => api('PUT', `/api/change-requests/${id}`,d),
+  cancelChangeReq:(id)     => api('DELETE',`/api/change-requests/${id}`),
+};
+
+function toQuery(p) {
+  if (!p) return '';
+  const q = Object.entries(p).filter(([,v])=>v!==''&&v!=null).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+  return q ? '?'+q : '';
+}
+
+/* ============================================================
+   模块二：工具
+   ============================================================ */
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type==='err'?'#dc2626':type==='warn'?'#d97706':'#1a9e5c';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2500);
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function setLoading(el, on, txt='') {
+  if (typeof el==='string') el=document.getElementById(el);
+  if (!el) return;
+  el.disabled = on;
+  if (on) el.dataset.orig = el.innerHTML;
+  el.innerHTML = on ? '<i class="ti ti-loader" style="animation:spin .8s linear infinite"></i> ...' : (txt||el.dataset.orig||el.innerHTML);
+}
+const _spinStyle = document.createElement('style');
+_spinStyle.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(_spinStyle);
+
+function stockStatus(qty, thresh) {
+  qty=Number(qty); thresh=Number(thresh)||10;
+  if (qty<=0) return 'empty';
+  if (qty<=thresh) return 'low';
+  return 'ok';
+}
+function statusBadge(st) {
+  return { ok: T('sOk'), low: T('sLow'), empty: T('sEmpty') }[st] || st;
+}
+
+/* ============================================================
+   模块三：认证
+   ============================================================ */
+function switchLoginTab(role) {
+  document.querySelectorAll('.login-tab').forEach((el,i)=>el.classList.toggle('active',(role==='admin'?0:1)===i));
+  document.getElementById('loginUser').value = role;
+  document.getElementById('loginPass').value = '123456';
+}
+
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.style.display = 'none';
+  const btn = document.querySelector('.login-btn');
+  setLoading(btn, true);
+  const data = await API.login(u, p);
+  setLoading(btn, false);
+  btn.innerHTML = `<i class="ti ti-login"></i> ${T('loginBtn')}`;
+  if (!data) { errEl.textContent = T('loginErr'); errEl.style.display='block'; return; }
+
+  _token = data.access_token;
+  _currentUser = { id: data.user_id, name: data.user_name, role: data.role };
+  _fields = await API.fields() || [];
+  const cfg = await API.config() || {};
+  _config = { warehouseName: cfg.warehouse_name||'主仓库', warnThresh: Number(cfg.warn_threshold)||10, unit: cfg.stock_unit||'件' };
+
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'flex';
+  const av = document.getElementById('sidebarAvatar');
+  av.textContent = _currentUser.name[0];
+  av.className = 'avatar '+_currentUser.role;
+  document.getElementById('sidebarName').textContent = _currentUser.name;
+  document.getElementById('sidebarRole').textContent = _currentUser.role==='admin'?'Administrator':'Operator';
+  // admin-only 元素（日志）
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=_currentUser.role==='admin'?'flex':'none');
+  // 设置对所有用户可见
+  const settingsNav = document.querySelector('.nav-item[data-page="settings"]');
+  if (settingsNav) settingsNav.style.display = 'flex';
+  applyLang();
+  goto('dashboard');
+}
+
+async function logout() {
+  await API.logout();
+  _token=null; _currentUser=null; _fields=[]; _config={};
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+}
+
+/* ============================================================
+   模块四：导航
+   ============================================================ */
+function goto(p) {
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(n=>n.classList.toggle('active',n.dataset.page===p));
+  const titleEl = document.getElementById('topbarTitle');
+  titleEl.textContent = T(p);
+  titleEl.dataset.page = p;
+  const fns = { dashboard:renderDashboard, inventory:renderInventory, archive:renderArchive, analysis:renderAnalysis, settings:renderSettings, logs:renderLogs, entry:renderEntry };
+  if (fns[p]) fns[p]();
+}
+
+/* ============================================================
+   模块五：概览
+   ============================================================ */
+async function renderDashboard() {
+  const [summary, archiveData] = await Promise.all([API.summary(), API.archive({page_size:6})]);
+  if (!summary) return;
+  document.getElementById('s-types').textContent = summary.total_types;
+  document.getElementById('s-total').textContent = summary.total_stock.toLocaleString();
+  document.getElementById('s-warn').textContent  = summary.warn_count;
+  document.getElementById('s-today').textContent = summary.today_ops;
+
+  const [warnData, emptyData] = await Promise.all([
+    API.inventory({status:'low', page_size:6}),
+    API.inventory({status:'empty', page_size:6})
+  ]);
+  const warnItems = [...(emptyData?.items||[]), ...(warnData?.items||[])].slice(0,6);
+  document.getElementById('warnList').innerHTML = warnItems.length
+    ? warnItems.map(i=>`<div class="alert-item"><span>${i.name} <span style="color:var(--text-muted);font-size:12px">${i.code||''}</span></span><span class="badge ${stockStatus(i.stock,_config.warnThresh)}">${i.stock} ${_config.unit}</span></div>`).join('')
+    : `<div class="empty"><i class="ti ti-circle-check"></i>${T('warnEmpty')}</div>`;
+
+  const recs = archiveData?.records || [];
+  document.getElementById('recentList').innerHTML = recs.length
+    ? recs.map(a=>`<div class="alert-item"><span>${a.item_name||'-'}</span><span style="font-size:12px;color:var(--text-muted)"><span class="badge ${a.record_type}">${a.record_type==='in'?T('badgeIn'):T('badgeOut')}</span> ${a.qty} &nbsp;${(a.created_at||'').slice(5,10)}</span></div>`).join('')
+    : `<div class="empty"><i class="ti ti-inbox"></i>${T('recentEmpty')}</div>`;
+}
+
+/* ============================================================
+   模块六：物资录入
+   ============================================================ */
+function renderEntry() {
+  const container = document.getElementById('entryFormFields');
+  const submitBtn = document.getElementById('entrySubmitBtn');
+  const title     = document.getElementById('entryCardTitle');
+  if (_entryTab==='out') {
+    title.innerHTML = `<i class="ti ti-arrow-up" style="color:var(--warning)"></i>${T('entryOutTitle')}`;
+    loadInventorySelect(container, submitBtn);
+    return;
+  }
+  title.innerHTML = `<i class="ti ti-package"></i>${T('entryInTitle')}`;
+  container.innerHTML = _fields.map(f => {
+    const full = f.id==='note' ? 'full' : '';
+    const req  = f.is_required ? `<span class="required-mark">${T('required_mark')}</span>` : '';
+    if (f.field_type==='select' && f.options) {
+      return `<div class="form-group ${full}"><label class="form-label">${fieldLabel(f)}${req}</label>
+        <select id="ef_${f.id}"><option value="">${T('PleaseSelect')}</option>${f.options.split(',').map(o=>`<option>${o.trim()}</option>`).join('')}</select></div>`;
+    }
+    const micBtn  = f.field_type==='text' ? `<button type="button" class="mic-btn" data-voice="ef_${f.id}" onclick="startVoice('ef_${f.id}')" title="${T('scanHint')||'语音'}"><i class="ti ti-microphone"></i></button>` : '';
+    const scanBtn = f.id==='code' ? `<button type="button" class="mic-btn" style="color:var(--primary)" onclick="openScan('ef_code')" title="${T('scanTitle')||'扫码'}"><i class="ti ti-scan"></i></button>` : '';
+    return `<div class="form-group ${full}"><label class="form-label">${fieldLabel(f)}${req}</label>
+      <div class="input-wrap"><input type="${f.field_type}" id="ef_${f.id}" placeholder="${fieldLabel(f)}">${micBtn}${scanBtn}</div></div>`;
+  }).join('');
+  submitBtn.innerHTML = `<i class="ti ti-check"></i>${T('submitIn')}`;
+  submitBtn.onclick = submitEntry;
+}
+
+async function loadInventorySelect(container, submitBtn) {
+  container.innerHTML = `<div style="color:var(--text-muted);font-size:13px">${T('loading')}</div>`;
+  const data = await API.inventory({page_size:200});
+  const inv  = data?.items || [];
+  container.innerHTML = `
+    <div class="form-group"><label class="form-label">${T('lblSelectItem')} <span class="required-mark">*</span></label>
+      <select id="quickOutSel"><option value="">${T('phSelectItem')}</option>
+        ${inv.map(i=>`<option value="${i.id}">${i.name}（${i.code||''}）${T('thStock')}：${i.stock}</option>`).join('')}
+      </select></div>
+    <div class="form-group"><label class="form-label">${T('lblQty')} <span class="required-mark">*</span></label><input type="number" id="quickOutQty" min="1" placeholder="${T('phQty')}"></div>
+    <div class="form-group"><label class="form-label">${T('lblRecipient')}</label><input type="text" id="quickOutPerson" placeholder="${T('optional')}"></div>
+    <div class="form-group full"><label class="form-label">${T('lblNote')}</label><input type="text" id="quickOutNote" placeholder="${T('optional')}"></div>`;
+  submitBtn.innerHTML = `<i class="ti ti-check"></i>${T('submitOut')}`;
+  submitBtn.onclick = doQuickOut;
+}
+
+function switchEntryTab(tab) {
+  _entryTab = tab;
+  document.querySelectorAll('#page-entry .tab[data-tab]').forEach(el=>el.classList.toggle('active', el.dataset.tab===tab));
+  renderEntry();
+}
+
+function clearEntry() {
+  document.querySelectorAll('#entryFormFields input,#entryFormFields select').forEach(el=>el.value='');
+  _scanExistingItemId = null;
+  const btn = document.getElementById('entrySubmitBtn');
+  if (btn) btn.innerHTML = `<i class="ti ti-check"></i><span>${T('submitIn')}</span>`;
+}
+
+async function submitEntry() {
+  // 核心字段：有独立数据库列，直接放 body 顶层
+  const CORE_KEYS = new Set(['name','code','category','spec','unit','qty','location','supplier','price','expire','note']);
+
+  const body = {};
+  const extra = {};   // 自定义字段值，最终 JSON 序列化到 body.extra_data
+
+  for (const f of _fields) {
+    const el = document.getElementById('ef_'+f.id);
+    if (!el) continue;
+    const val = el.value.trim();
+    if (f.is_required && !val) { toast(f.label+T('errRequired'),'err'); return; }
+    if (!val) continue;
+
+    if (CORE_KEYS.has(f.id)) {
+      // 核心字段：直接放顶层，注意 expire→expire_date
+      const key = f.id==='expire' ? 'expire_date' : f.id;
+      body[key] = f.field_type==='number' ? Number(val) : val;
+    } else {
+      // 自定义字段：存入 extra
+      extra[f.id] = f.field_type==='number' ? Number(val) : val;
+    }
+  }
+
+  body.qty = parseInt(body.qty)||0;
+  if (body.qty<=0) { toast(T('errQtyZero'),'err'); return; }
+
+  // 合并已有 extra_data（追加入库时保留旧自定义字段值）
+  if (Object.keys(extra).length) {
+    body.extra_data = JSON.stringify(extra);
+  }
+
+  const btn = document.getElementById('entrySubmitBtn');
+  setLoading(btn, true);
+  let result;
+  if (_scanExistingItemId) {
+    // 追加入库：走 stock-in 接口
+    result = await API.stockIn(_scanExistingItemId, { qty: body.qty, note: body.note || '' });
+  } else {
+    result = await API.addItem(body);
+  }
+  setLoading(btn, false);
+  if (result) { toast(T('toastIn')); clearEntry(); }
+}
+
+async function doQuickOut() {
+  const itemId   = document.getElementById('quickOutSel')?.value;
+  const qty      = Number(document.getElementById('quickOutQty')?.value)||0;
+  const receiver = document.getElementById('quickOutPerson')?.value||'';
+  const note     = document.getElementById('quickOutNote')?.value||'';
+  if (!itemId) { toast(T('errSelectItem'),'err'); return; }
+  if (qty<=0)  { toast(T('errOutQty'),'err'); return; }
+  const btn = document.getElementById('entrySubmitBtn');
+  setLoading(btn, true);
+  const result = await API.stockOut(itemId, {item_id:itemId,qty,receiver,note});
+  setLoading(btn, false);
+  if (result) { toast(T('toastOut')); renderEntry(); }
+}
+
+/* ============================================================
+   模块七：库存查询（含编辑/删除）
+   ============================================================ */
+async function renderInventory() {
+  const q      = document.getElementById('invSearch')?.value||'';
+  const cat    = document.getElementById('invCat')?.value||'';
+  const status = document.getElementById('invStatus')?.value||'';
+  const data   = await API.inventory({q,category:cat,status,page_size:100});
+  if (!data) return;
+
+  // 填类别下拉
+  const catField = _fields.find(f=>f.id==='category');
+  const catSel   = document.getElementById('invCat');
+  if (catSel && catSel.options.length<=1 && catField?.options) {
+    catField.options.split(',').forEach(c=>{
+      const o=document.createElement('option'); o.value=c.trim(); o.textContent=c.trim(); catSel.appendChild(o);
+    });
+  }
+
+  const showFields = _fields.filter(f=>!['qty','note'].includes(f.id));
+  document.getElementById('invHead').innerHTML = '<tr>'
+    + showFields.map(f=>`<th>${fieldLabel(f)}</th>`).join('')
+    + `<th>${T('thStock')}</th><th>${T('thStatus')}</th><th style="text-align:center">${T('thAction')}</th></tr>`;
+
+  document.getElementById('invCount').textContent = T('totalRec').replace('{n}', data.total);
+
+  const tbody = document.getElementById('invBody');
+  if (!data.items.length) {
+    tbody.innerHTML = `<tr><td colspan="99"><div class="empty"><i class="ti ti-search-off"></i>${T('noRecord')}</div></td></tr>`;
+    return;
+  }
+  const CORE_KEYS = new Set(['name','code','category','spec','unit','location','supplier','price','expire_date','note']);
+  const fk = f => f.id==='expire' ? 'expire_date' : f.id;
+
+  // 解析 extra_data 工具函数
+  const parseExtra = item => {
+    try { return item.extra_data ? JSON.parse(item.extra_data) : {}; }
+    catch { return {}; }
+  };
+
+  tbody.innerHTML = data.items.map(item => {
+    const st    = stockStatus(item.stock, _config.warnThresh);
+    const extra = parseExtra(item);
+
+    const cols = showFields.map(f => {
+      const key = fk(f);
+      // 核心字段从 item 顶层取，自定义字段从 extra_data 取
+      const val = CORE_KEYS.has(key) ? item[key] : extra[f.id];
+      return `<td>${val ?? '<span style="color:var(--text-light)">-</span>'}</td>`;
+    }).join('');
+
+    const isAdmin = _currentUser?.role==='admin';
+    const isOwner = item.created_by && item.created_by===_currentUser?.id;
+    const canEdit = isAdmin || isOwner;
+    const canDel  = isAdmin;
+
+    const editBtn = canEdit
+      ? `<button class="btn sm" style="background:#f0f7ff;border-color:#1a6fc4;color:#1a6fc4" onclick="openEditModal('${item.id}')"><i class="ti ti-pencil"></i>${T('btnEdit')}</button>`
+      : '';
+    const delBtn  = canDel
+      ? `<button class="btn sm danger" onclick="deleteItem('${item.id}')"><i class="ti ti-trash"></i>${T('btnDel')}</button>`
+      : '';
+
+    return `<tr>${cols}
+      <td><b>${item.stock}</b> ${_config.unit}</td>
+      <td><span class="badge ${st}">${statusBadge(st)}</span></td>
+      <td style="text-align:center;white-space:nowrap;display:flex;gap:4px;justify-content:center;padding:9px 8px">
+        <button class="btn sm success" onclick="openOutModal('${item.id}','${item.name.replace(/'/g,"&apos;")}',${item.stock})"><i class="ti ti-arrow-up"></i>${T('btnOut')}</button>
+        ${editBtn}${delBtn}
+      </td></tr>`;
+  }).join('');
+}
+
+function openOutModal(id, name, stock) {
+  _outTargetId = id;
+  document.getElementById('outName').value     = name;
+  document.getElementById('outCurStock').value = stock;
+  document.getElementById('outQty').value      = '';
+  document.getElementById('outPerson').value   = '';
+  document.getElementById('outNote').value     = '';
+  openModal('modalOut');
+}
+
+async function doOut() {
+  const qty      = Number(document.getElementById('outQty').value)||0;
+  const receiver = document.getElementById('outPerson').value;
+  const note     = document.getElementById('outNote').value;
+  if (qty<=0) { toast(T('errOutEmpty'),'err'); return; }
+  const btn = document.querySelector('#modalOut .btn.primary');
+  setLoading(btn, true);
+  const result = await API.stockOut(_outTargetId, {item_id:_outTargetId,qty,receiver,note});
+  setLoading(btn, false);
+  if (result) { toast(T('toastOut')); closeModal('modalOut'); renderInventory(); }
+}
+
+/* ─── 编辑物资 ─── */
+async function openEditModal(id) {
+  const item = await API.getItem(id);
+  if (!item) { toast(T('errReq'),'err'); return; }
+
+  _editTargetId = id;
+  _editItemData = item;
+
+  const isAdmin = _currentUser?.role==='admin';
+  const isOwner = item.created_by && item.created_by===_currentUser?.id;
+  if (!isAdmin && !isOwner) { toast(T('noPermission'),'warn'); return; }
+
+  const CORE_KEYS = new Set(['name','code','category','spec','unit','location','supplier','price','expire_date','note']);
+  const fk    = f => f.id==='expire' ? 'expire_date' : f.id;
+  // 解析 extra_data
+  let extra = {};
+  try { extra = item.extra_data ? JSON.parse(item.extra_data) : {}; } catch {}
+
+  const container = document.getElementById('editFormFields');
+  container.innerHTML = _fields.map(f => {
+    const key  = fk(f);
+    // 核心字段从顶层取，自定义字段从 extra 取
+    const val  = (CORE_KEYS.has(key) ? item[key] : extra[f.id]) ?? '';
+    const full = f.id==='note' ? 'full' : '';
+    const req  = f.is_required ? `<span class="required-mark">*</span>` : '';
+
+    if (f.id==='code') {
+      return `<div class="form-group"><label class="form-label">${fieldLabel(f)}
+        <span style="font-size:11px;color:var(--text-muted);margin-left:4px">(${T('codeReadOnly')})</span></label>
+        <input type="text" value="${val}" readonly style="background:#f8fafc;color:var(--text-muted)"></div>`;
+    }
+    if (f.field_type==='select' && f.options) {
+      const opts = f.options.split(',').map(o=>`<option${o.trim()===String(val)?' selected':''}>${o.trim()}</option>`).join('');
+      return `<div class="form-group ${full}"><label class="form-label">${fieldLabel(f)}${req}</label>
+        <select id="edf_${f.id}"><option value=""></option>${opts}</select></div>`;
+    }
+    if (f.id==='qty') {
+      return `<div class="form-group"><label class="form-label">${fieldLabel(f)}
+        <span style="font-size:11px;color:var(--text-muted);margin-left:4px">（${_lang==='zh'?'通过出入库调整':'adjust via In/Out'}）</span></label>
+        <input type="number" id="edf_${f.id}" value="${item.stock}" readonly style="background:#f8fafc;color:var(--text-muted)"></div>`;
+    }
+    const micBtn2 = f.field_type==='text' ? `<button type="button" class="mic-btn" data-voice="edf_${f.id}" onclick="startVoice('edf_${f.id}')" title="语音输入"><i class="ti ti-microphone"></i></button>` : '';
+    return `<div class="form-group ${full}"><label class="form-label">${fieldLabel(f)}${req}</label>
+      <div class="input-wrap"><input type="${f.field_type}" id="edf_${f.id}" value="${val}" placeholder="${fieldLabel(f)}">${micBtn2}</div></div>`;
+  }).join('');
+
+  openModal('modalEdit');
+}
+
+async function submitEdit() {
+  const CORE_KEYS = new Set(['name','code','category','spec','unit','location','supplier','price','expire_date','note']);
+  const fk = f => f.id==='expire' ? 'expire_date' : f.id;
+
+  const body  = {};
+  const extra = {};
+
+  // 先把旧的 extra_data 读出来（保留已删除字段的历史值）
+  try {
+    if (_editItemData?.extra_data) {
+      Object.assign(extra, JSON.parse(_editItemData.extra_data));
+    }
+  } catch {}
+
+  for (const f of _fields) {
+    if (f.id==='qty') continue;
+    const el = document.getElementById('edf_'+f.id);
+    if (!el) continue;
+    const val = el.value.trim();
+    if (f.is_required && !val) { toast(f.label+T('errRequired'),'err'); return; }
+
+    const key = fk(f);
+    const parsed = f.field_type==='number' ? (val===''?null:Number(val)) : val;
+
+    if (CORE_KEYS.has(key)) {
+      body[key] = parsed;           // 核心字段放顶层
+    } else {
+      if (val) extra[f.id] = parsed; // 自定义字段更新进 extra
+      else delete extra[f.id];       // 清空时从 extra 移除
+    }
+  }
+
+  // 把最新的 extra 序列化回 body
+  body.extra_data = Object.keys(extra).length ? JSON.stringify(extra) : null;
+
+  const btn = document.getElementById('editSaveBtn');
+  setLoading(btn, true);
+  const result = await API.updateItem(_editTargetId, body);
+  setLoading(btn, false);
+  if (result) { toast(T('toastEditOk')); closeModal('modalEdit'); renderInventory(); }
+}
+
+async function deleteItem(id) {
+  if (!confirm(T('cfmDelItem'))) return;
+  const result = await API.deleteItem(id);
+  if (result) { toast(T('toastDelOk')); renderInventory(); }
+}
+
+async function exportCSV() {
+  // 分页拉取全量（每页200，自动翻页）
+  let allItems = [], page = 1, total = Infinity;
+  while (allItems.length < total) {
+    const chunk = await API.inventory({page_size:200, page});
+    if (!chunk) return;
+    total = chunk.total;
+    allItems = allItems.concat(chunk.items||[]);
+    if ((chunk.items||[]).length < 200) break;
+    page++;
+  }
+  const data = { items: allItems };
+  if (!allItems.length) return;
+  const CORE_KEYS = new Set(['name','code','category','spec','unit','location','supplier','price','expire_date','note']);
+  const fk = f => f.id==='expire' ? 'expire_date' : f.id;
+  const showFields = _fields.filter(f=>f.id!=='qty');
+  const rows = [
+    [...showFields.map(f=>fieldLabel(f)), T('thStock')].join(','),
+    ...data.items.map(item => {
+      let extra = {};
+      try { extra = item.extra_data ? JSON.parse(item.extra_data) : {}; } catch {}
+      const cells = showFields.map(f => {
+        const key = fk(f);
+        const val = CORE_KEYS.has(key) ? (item[key]??'') : (extra[f.id]??'');
+        return `"${String(val).replace(/"/g,'""')}"`;
+      });
+      cells.push(item.stock);
+      return cells.join(',');
+    })
+  ];
+  const blob = new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `WMS_${new Date().toLocaleDateString('zh')}.csv`;
+  a.click();
+}
+
+/* ============================================================
+   模块八：出入库档案
+   ============================================================ */
+async function renderArchive() {
+  const q    = document.getElementById('archSearch')?.value||'';
+  const type = document.getElementById('archType')?.value||'';
+  const date = document.getElementById('archDate')?.value||'';
+  const data = await API.archive({q,record_type:type,date,page_size:200});
+  if (!data) return;
+  const recs = data.records||[];
+  const countEl = document.getElementById('archCount');
+  if (countEl) countEl.textContent = recs.length
+    ? (data.total > recs.length
+        ? (_lang==='zh'?`显示 ${recs.length} / ${data.total} 条，导出将导出全部`:`Showing ${recs.length} / ${data.total}, export will include all`)
+        : (_lang==='zh'?`共 ${recs.length} 条记录`:`${recs.length} records`))
+    : '';
+  document.getElementById('archBody').innerHTML = recs.length
+    ? recs.map(a=>`<tr>
+        <td style="white-space:nowrap;font-size:12px;color:var(--text-muted)">${(a.created_at||'').replace('T',' ').slice(0,16)}</td>
+        <td><span class="badge ${a.record_type}">${a.record_type==='in'?T('archBadgeIn'):T('archBadgeOut')}</span></td>
+        <td>${a.item_name||'-'}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${a.item_code||'-'}</td>
+        <td><b>${a.qty}</b></td>
+        <td>${a.operator_name||'-'}</td>
+        <td style="color:var(--text-muted)">${a.receiver||'-'}</td>
+        <td style="color:var(--text-muted)">${a.note||'-'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="8"><div class="empty"><i class="ti ti-file-off"></i>${T('noArch')}</div></td></tr>`;
+}
+
+/* 导出出入库档案 CSV */
+async function exportArchiveCSV() {
+  const q    = document.getElementById('archSearch')?.value||'';
+  const type = document.getElementById('archType')?.value||'';
+  const date = document.getElementById('archDate')?.value||'';
+  const btn  = document.getElementById('btnArchExport');
+  setLoading(btn, true);
+  let all = [], page = 1, total = Infinity;
+  while (all.length < total) {
+    const chunk = await API.archive({q, record_type:type, date, page_size:200, page});
+    if (!chunk) break;
+    total = chunk.total;
+    all = all.concat(chunk.records||[]);
+    if ((chunk.records||[]).length < 200) break;
+    page++;
+  }
+  setLoading(btn, false);
+  if (!all.length) { toast(_lang==='zh'?'没有可导出的记录':'No records to export', 'warn'); return; }
+  const typeLabel = r => r.record_type==='in' ? (_lang==='zh'?'入库':'In') : (_lang==='zh'?'出库':'Out');
+  const headers = _lang==='zh'
+    ? ['时间','类型','物资名称','物资编码','数量','操作人','领取人','备注']
+    : ['Time','Type','Item Name','Item Code','Qty','Operator','Receiver','Note'];
+  const rows = [
+    headers.join(','),
+    ...all.map(a => [
+      `"${(a.created_at||'').replace('T',' ').slice(0,16)}"`,
+      `"${typeLabel(a)}"`,
+      `"${(a.item_name||'').replace(/"/g,'""')}"`,
+      `"${a.item_code||''}"`,
+      a.qty,
+      `"${a.operator_name||''}"`,
+      `"${a.receiver||''}"`,
+      `"${(a.note||'').replace(/"/g,'""')}"`
+    ].join(','))
+  ];
+  const typeStr = type==='out'?(_lang==='zh'?'出库':'Out'):type==='in'?(_lang==='zh'?'入库':'In'):(_lang==='zh'?'出入库':'Records');
+  const blob = new Blob(['﻿'+rows.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `DQWO_${typeStr}_${date||new Date().toLocaleDateString('zh')}.csv`;
+  a.click();
+}
+
+/* ============================================================
+   模块九：数据分析
+   ============================================================ */
+async function renderAnalysis() {
+  const [summary, stockTop, catDist, trend] = await Promise.all([
+    API.summary(), API.stockTop(), API.catDist(), API.trend()
+  ]);
+  const noDataHtml = `<div class="empty"><i class="ti ti-inbox"></i>${T('noData')}</div>`;
+  const maxS = stockTop?.[0]?.value||1;
+  document.getElementById('stockChart').innerHTML = (stockTop||[]).map(i=>
+    `<div class="bar-row"><div class="bar-label" title="${i.label}">${i.label.slice(0,6)}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(i.value/maxS*100)}%;background:#1a6fc4"></div></div>
+    <div class="bar-val">${i.value}</div></div>`).join('')||noDataHtml;
+
+  const colors=['#1a6fc4','#1a9e5c','#d97706','#7c3aed','#dc2626','#0891b2','#c026d3'];
+  const maxC = catDist?.[0]?.value||1;
+  document.getElementById('catChart').innerHTML = (catDist||[]).map((i,idx)=>
+    `<div class="bar-row"><div class="bar-label">${i.label.slice(0,5)}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(i.value/maxC*100)}%;background:${colors[idx%colors.length]}"></div></div>
+    <div class="bar-val">${i.value}</div></div>`).join('')||noDataHtml;
+
+  const maxT = Math.max(...(trend||[]).map(t=>Math.max(t.in_qty,t.out_qty)),1);
+  document.getElementById('trendChart').innerHTML = (trend||[]).map(t=>
+    `<div class="trend-col"><div class="trend-bars">
+      <div class="trend-bar" style="height:${Math.round(t.in_qty/maxT*100)}px;background:#1a6fc4" title="${T('legendIn')}:${t.in_qty}"></div>
+      <div class="trend-bar" style="height:${Math.round(t.out_qty/maxT*100)}px;background:#d97706" title="${T('legendOut')}:${t.out_qty}"></div>
+    </div><div class="trend-label">${t.date}</div></div>`).join('');
+
+  if (summary) {
+    document.getElementById('totalIn').textContent  = (summary.total_in||0).toLocaleString();
+    document.getElementById('totalOut').textContent = (summary.total_out||0).toLocaleString();
+    document.getElementById('totalVal').textContent = '¥'+(summary.total_value||0).toLocaleString('zh',{maximumFractionDigits:0});
+  }
+}
+
+/* ============================================================
+   模块十：系统设置
+   ============================================================ */
+async function renderSettings() {
+  const isAdmin = _currentUser?.role === 'admin';
+  document.getElementById('adminSettingsView').style.display = isAdmin ? '' : 'none';
+  document.getElementById('userSettingsView').style.display  = isAdmin ? 'none' : '';
+  if (isAdmin) {
+    await Promise.all([renderFieldList(), renderUserTable(), loadConfigForm(), loadPendingRequests()]);
+  } else {
+    await renderUserSettings();
+  }
+}
+
+/* ── 管理员：加载待处理申请 ── */
+async function loadPendingRequests() {
+  const all = await API.changeReqs();
+  if (!all) return;
+  const pending = all.filter(r => r.status === 'pending');
+  const card = document.getElementById('pendingReqsCard');
+  _setTxt('pendingReqsTitle', T('pendingReqs'));
+  if (!pending.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  document.getElementById('pendingReqsList').innerHTML = pending.map(r => `
+    <div class="cr-item">
+      <div class="cr-meta">
+        <span style="font-weight:600;color:var(--text)">${r.user_name}</span>
+        <span>${(r.created_at||'').replace('T',' ').slice(0,16)}</span>
+        <span class="badge low">${T('statusPending')}</span>
+      </div>
+      <div class="cr-desc">${r.description}</div>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="note_${r.id}" placeholder="${T('reqNoteTitle')}" style="flex:1;min-width:120px;font-size:12px;padding:4px 8px">
+        <select id="exp_${r.id}" style="width:auto;font-size:12px;padding:4px 8px" title="${_lang==='zh'?'授权有效期':'Grant duration'}">
+          <option value="8">${_lang==='zh'?'8 小时':'8 hours'}</option>
+          <option value="24" selected>${_lang==='zh'?'24 小时':'24 hours'}</option>
+          <option value="72">${_lang==='zh'?'3 天':'3 days'}</option>
+          <option value="168">${_lang==='zh'?'7 天':'7 days'}</option>
+          <option value="0">${_lang==='zh'?'永久':'Permanent'}</option>
+        </select>
+        <button class="btn xs success" onclick="handleReq(${r.id},'approved')"><i class="ti ti-check"></i>${T('approveBtn')}</button>
+        <button class="btn xs danger"  onclick="handleReq(${r.id},'rejected')"><i class="ti ti-x"></i>${T('rejectBtn')}</button>
+      </div>
+    </div>`).join('');
+}
+
+async function handleReq(id, status) {
+  const note = document.getElementById('note_'+id)?.value||'';
+  const expires_hours = status==='approved'
+    ? parseInt(document.getElementById('exp_'+id)?.value||'24')
+    : null;
+  const result = await API.handleChangeReq(id, {status, admin_note: note, expires_hours});
+  if (result) { toast(status==='approved'?T('reqApproveOk'):T('reqRejectOk')); loadPendingRequests(); }
+}
+
+/* ── 普通用户：只读设置视图 ── */
+async function renderUserSettings() {
+  const [fields, cfg, reqs] = await Promise.all([API.fields(), API.config(), API.changeReqs()]);
+  if (!fields || !cfg) return;
+  const typeLabel = { text:T('typeText'), number:T('typeNum'), date:T('typeDate'), select:T('typeSel') };
+  const myPending = (reqs||[]).filter(r=>r.status==='pending').length;
+
+  // 检查是否有有效的授权（approved + 未过期）
+  const now = new Date();
+  const activeGrant = (reqs||[]).find(r => {
+    if (r.status !== 'approved') return false;
+    try {
+      const meta = JSON.parse(r.admin_note||'{}');
+      if (!meta.expires_at) return true;                   // 永久授权
+      return new Date(meta.expires_at) > now;
+    } catch { return false; }
+  });
+
+  // 授权剩余时间文字
+  let grantBanner = '';
+  if (activeGrant) {
+    let expText = '';
+    try {
+      const meta = JSON.parse(activeGrant.admin_note||'{}');
+      if (meta.expires_at) {
+        const ms = new Date(meta.expires_at) - now;
+        const h  = Math.floor(ms/3600000);
+        const m  = Math.floor((ms%3600000)/60000);
+        expText  = _lang==='zh'?`剩余 ${h} 小时 ${m} 分`:`Expires in ${h}h ${m}m`;
+      } else {
+        expText = _lang==='zh'?'永久授权':'Permanent grant';
+      }
+    } catch {}
+    grantBanner = `
+    <div class="card" style="border-color:#1a9e5c;background:#f0faf4">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a9e5c">
+        <i class="ti ti-lock-open" style="font-size:18px"></i>
+        <span><b>${_lang==='zh'?'已获得临时编辑权限':'Temporary edit access granted'}</b> — ${expText}</span>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('userSettingsView').innerHTML = `
+    <!-- 状态提示 -->
+    ${activeGrant ? grantBanner : `
+    <div class="card" style="border-color:#d97706;background:#fffbeb">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#b45309">
+        <i class="ti ti-eye" style="font-size:18px"></i>
+        <span>${T('settingsReadOnly')}</span>
+      </div>
+    </div>`}
+
+    <!-- 字段列表（只读） -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px"><i class="ti ti-list"></i>${T('fldMgmt')}</div>
+      ${fields.map(f=>`
+        <div class="field-row" style="margin-bottom:6px">
+          <span class="field-row-name">${fieldLabel(f)}</span>
+          <span class="field-row-type">${typeLabel[f.field_type]||f.field_type}</span>
+          ${f.is_required?`<span class="badge ok" style="font-size:10px">${T('fldRequired')}</span>`:`<span style="font-size:11px;color:var(--text-light)">${T('fldOptional')}</span>`}
+          ${f.is_core?`<span class="badge in" style="font-size:10px">${T('fldCore')}</span>`:''}
+        </div>`).join('')}
+    </div>
+
+    <!-- 系统参数 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px"><i class="ti ti-adjustments"></i>${T('cfgTitle')}</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">${T('cfgWarehouse')}</label>
+          <input type="text" id="uCfgWarehouse" value="${cfg.warehouse_name||''}" ${activeGrant?'':'readonly style="background:#f8fafc;color:var(--text-muted)"'}></div>
+        <div class="form-group"><label class="form-label">${T('cfgThresh')}</label>
+          <input type="number" id="uCfgThresh" value="${cfg.warn_threshold||10}" ${activeGrant?'':'readonly style="background:#f8fafc;color:var(--text-muted)"'}></div>
+        <div class="form-group"><label class="form-label">${T('cfgUnit')}</label>
+          <input type="text" id="uCfgUnit" value="${cfg.stock_unit||''}" ${activeGrant?'':'readonly style="background:#f8fafc;color:var(--text-muted)"'}></div>
+      </div>
+      ${activeGrant?`<div style="margin-top:12px">
+        <button class="btn primary" onclick="saveUserConfig()"><i class="ti ti-device-floppy"></i>${T('save')}</button>
+      </div>`:''}
+    </div>
+
+    <!-- 提交变更申请 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="ti ti-send" style="color:var(--primary)"></i>${T('submitRequest')}</div>
+        <span style="font-size:12px;color:${myPending>=3?'var(--danger)':'var(--text-muted)'}">${myPending}/3 ${T('statusPending')}</span>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <textarea id="crDesc" rows="3" placeholder="${T('reqPlaceholder')}" style="resize:vertical"></textarea>
+      </div>
+      <button class="btn primary" onclick="submitChangeRequest()" ${myPending>=3?'disabled style="opacity:0.5"':''}>
+        <i class="ti ti-send"></i>${T('submitRequest')}
+      </button>
+    </div>
+
+    <!-- 我的申请记录 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px"><i class="ti ti-clock"></i>${T('myRequests')}</div>
+      ${!(reqs&&reqs.length)
+        ? `<div class="empty"><i class="ti ti-inbox"></i>${T('noRequests')}</div>`
+        : reqs.map(r=>{
+            const st = {pending:'low',approved:'ok',rejected:'stopped'}[r.status]||'';
+            // 解析授权信息
+            let noteDisplay = '';
+            if (r.admin_note) {
+              try {
+                const meta = JSON.parse(r.admin_note);
+                const parts = [];
+                if (meta.note) parts.push(meta.note);
+                if (meta.expires_at) {
+                  const left = new Date(meta.expires_at) - now;
+                  parts.push(left > 0
+                    ? (_lang==='zh'?`有效至 ${new Date(meta.expires_at).toLocaleString('zh')}`:`Valid until ${new Date(meta.expires_at).toLocaleString()}`)
+                    : (_lang==='zh'?'已过期':'Expired'));
+                } else if (r.status==='approved') {
+                  parts.push(_lang==='zh'?'永久授权':'Permanent');
+                }
+                noteDisplay = parts.join(' · ');
+              } catch { noteDisplay = r.admin_note; }
+            }
+            return `<div class="cr-item">
+              <div class="cr-meta">
+                <span class="badge ${st}">${T('status'+r.status.charAt(0).toUpperCase()+r.status.slice(1))}</span>
+                <span>${(r.created_at||'').replace('T',' ').slice(0,16)}</span>
+                ${r.status==='pending'?`<button class="btn xs danger" onclick="cancelRequest(${r.id})">${T('cancelReq')}</button>`:''}
+              </div>
+              <div class="cr-desc">${r.description}</div>
+              ${noteDisplay?`<div class="cr-note">${T('adminNoteLabel')}：${noteDisplay}</div>`:''}
+            </div>`;
+          }).join('')}
+    </div>`;
+}
+
+/* 授权用户保存系统配置 */
+async function saveUserConfig() {
+  const d = {
+    warehouse_name: document.getElementById('uCfgWarehouse')?.value.trim(),
+    warn_threshold: parseInt(document.getElementById('uCfgThresh')?.value)||10,
+    stock_unit:     document.getElementById('uCfgUnit')?.value.trim(),
+  };
+  const result = await API.saveConfig(d);
+  if (result) { toast(T('toastSaveOk')||(_lang==='zh'?'设置已保存':'Settings saved')); }
+}
+
+async function submitChangeRequest() {
+  const desc = document.getElementById('crDesc')?.value.trim();
+  if (!desc) { toast(T('errFldName'),'err'); return; }
+  const result = await API.submitChangeReq({description:desc});
+  if (result) { toast(T('reqSubmitOk')); renderUserSettings(); }
+}
+
+async function cancelRequest(id) {
+  const result = await API.cancelChangeReq(id);
+  if (result) { toast(T('reqCancelOk')); renderUserSettings(); }
+}
+async function loadConfigForm() {
+  const cfg = await API.config();
+  if (!cfg) return;
+  document.getElementById('cfgWarehouseName').value = cfg.warehouse_name||'主仓库';
+  document.getElementById('cfgWarnThresh').value    = cfg.warn_threshold||10;
+  document.getElementById('cfgUnit').value          = cfg.stock_unit||'件';
+}
+async function renderFieldList() {
+  const fields = await API.fields();
+  if (!fields) return;
+  _fields = fields;
+  const typeLabel = { text:T('typeText'), number:T('typeNum'), date:T('typeDate'), select:T('typeSel') };
+  document.getElementById('fieldList').innerHTML = fields.map(f=>
+    `<div class="field-row">
+      <span class="field-row-name">${fieldLabel(f)}</span>
+      <span class="field-row-type">${typeLabel[f.field_type]||f.field_type}</span>
+      ${f.is_required?`<span class="badge ok" style="font-size:10px">${T('fldRequired')}</span>`:`<span style="font-size:11px;color:var(--text-light)">${T('fldOptional')}</span>`}
+      ${f.is_core
+        ?`<span class="badge in" style="font-size:10px">${T('fldCore')}</span>
+          ${f.field_type==='select'?`<button class="btn sm" onclick="editCoreOptions('${f.id}')" title="${_lang==='zh'?'编辑下拉选项':'Edit options'}"><i class="ti ti-pencil"></i>${_lang==='zh'?'选项':''}</button>`:''}`
+        :`<button class="btn sm danger" onclick="removeField('${f.id}')"><i class="ti ti-trash"></i>${T('fldDel')}</button>`}
+    </div>`).join('');
+}
+function openAddField() {
+  document.getElementById('fldName').value='';
+  document.getElementById('fldOptions').value='';
+  openModal('modalField');
+}
+async function addField() {
+  const label = document.getElementById('fldName').value.trim();
+  if (!label) { toast(T('errFldName'),'err'); return; }
+  const result = await API.addField({
+    label,
+    field_type:  document.getElementById('fldType').value,
+    is_required: document.getElementById('fldRequired').value==='1',
+    options:     document.getElementById('fldOptions').value||null,
+  });
+  if (result) { toast(T('toastFieldAdd')); closeModal('modalField'); renderFieldList(); }
+}
+async function removeField(id) {
+  if (!confirm(T('cfmDelField'))) return;
+  const result = await API.delField(id);
+  if (result) { toast(T('toastFieldDel')); renderFieldList(); }
+}
+
+/* 编辑核心 select 字段的选项（如物资类别）*/
+async function editCoreOptions(fieldId) {
+  const f = _fields.find(x => x.id === fieldId);
+  if (!f) return;
+  const label = _lang === 'zh' ? `编辑「${fieldLabel(f)}」的下拉选项\n（用英文逗号分隔，如：机械,电气,仪表）` : `Edit options for "${fieldLabel(f)}"\n(comma separated, e.g. Mechanical,Electrical)`;
+  const newOpts = prompt(label, f.options || '');
+  if (newOpts === null) return; // 取消
+  const cleaned = newOpts.split(',').map(s => s.trim()).filter(Boolean).join(',');
+  const result = await API.updateField(fieldId, {
+    label: f.label, field_type: f.field_type,
+    is_required: f.is_required, options: cleaned, sort_order: f.sort_order
+  });
+  if (result) { toast(_lang === 'zh' ? '选项已更新' : 'Options updated'); renderFieldList(); }
+}
+
+async function renderUserTable() {
+  const users = await API.users();
+  if (!users) return;
+  document.getElementById('userTableBody').innerHTML = users.map(u=>
+    `<tr>
+      <td><code style="font-size:12px;background:#f3f4f6;padding:2px 6px;border-radius:4px">${u.id}</code></td>
+      <td>${u.name}</td>
+      <td><span class="badge ${u.role==='admin'?'admin':'ok'}">${u.role==='admin'?T('roleAdmin'):T('roleUser')}</span></td>
+      <td><span class="badge ${u.is_active?'ok':'stopped'}">${u.is_active?T('statusOn'):T('statusOff')}</span></td>
+      <td>${u.id==='admin'
+        ?`<span style="font-size:12px;color:var(--text-light)">${T('sysAcct')}</span>`
+        :`<button class="btn xs ${u.is_active?'danger':'success'}" onclick="toggleUser('${u.id}',${u.is_active})">${u.is_active?T('btnDisable'):T('btnEnable')}</button>
+          <button class="btn xs danger" style="margin-left:4px" onclick="deleteUser('${u.id}')"><i class="ti ti-trash"></i></button>`}
+      </td></tr>`).join('');
+}
+function openAddUser() {
+  ['uId','uName','uPass'].forEach(id=>document.getElementById(id).value='');
+  openModal('modalUser');
+}
+async function addUser() {
+  const id=document.getElementById('uId').value.trim();
+  const name=document.getElementById('uName').value.trim();
+  const pass=document.getElementById('uPass').value;
+  const role=document.getElementById('uRole').value;
+  if (!id||!name||!pass) { toast(T('errUserInfo'),'err'); return; }
+  const result = await API.addUser({id,name,role,password:pass});
+  if (result) { toast(T('toastUserAdd')); closeModal('modalUser'); renderUserTable(); }
+}
+async function toggleUser(id, currentActive) {
+  const result = await API.updateUser(id,{is_active:!currentActive});
+  if (result) { toast(currentActive?T('toastDisabled'):T('toastEnabled')); renderUserTable(); }
+}
+async function deleteUser(id) {
+  if (!confirm(T('cfmDelUser')+id+'？')) return;
+  const result = await API.deleteUser(id);
+  if (result) { toast(T('toastUserDel')); renderUserTable(); }
+}
+let _cfgTimer=null;
+function saveConfig() {
+  clearTimeout(_cfgTimer);
+  _cfgTimer = setTimeout(async()=>{
+    const result = await API.saveConfig({
+      warehouse_name: document.getElementById('cfgWarehouseName').value,
+      warn_threshold: Number(document.getElementById('cfgWarnThresh').value)||10,
+      stock_unit:     document.getElementById('cfgUnit').value||'件',
+    });
+    if (result) {
+      _config.warnThresh = Number(document.getElementById('cfgWarnThresh').value)||10;
+      _config.unit       = document.getElementById('cfgUnit').value||'件';
+      toast(T('toastSave'));
+    }
+  }, 800);
+}
+
+/* ============================================================
+   模块十一：操作日志
+   ============================================================ */
+async function renderLogs() {
+  const data = await API.logs({page_size:100});
+  if (!data) return;
+  document.getElementById('logContainer').innerHTML = (data.logs||[]).map(l=>
+    `<div class="log-row">
+      <span class="log-time">${(l.created_at||'').replace('T',' ').slice(0,16)}</span>
+      <span class="log-user">${l.operator_name||'?'}</span>
+      <span class="log-action">${l.action}</span>
+    </div>`).join('')||`<div class="empty"><i class="ti ti-file-off"></i>${T('noLogs')}</div>`;
+}
+async function clearLogs() {
+  if (!confirm(T('cfmClearLogs'))) return;
+  const result = await API.clearLogs();
+  if (result) { toast(T('toastLogClear')); renderLogs(); }
+}
+
+/* ============================================================
+   手机侧边栏开关
+   ============================================================ */
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+// 点导航时自动关闭侧边栏（手机，事件委托，不覆盖 goto）
+document.addEventListener('click', e => {
+  if (e.target.closest('.nav-item[data-page]')) {
+    document.querySelector('.sidebar')?.classList.remove('open');
+    document.getElementById('sidebarOverlay')?.classList.remove('open');
+  }
+});
+
+/* ============================================================
+   语音输入（Web Speech API）
+   ============================================================ */
+function startVoice(inputId) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast(_lang==='zh'?'浏览器不支持语音输入（请用 Chrome）':'Speech recognition not supported (use Chrome)', 'warn'); return; }
+  const btn = document.querySelector(`[data-voice="${inputId}"]`);
+  if (btn?.classList.contains('listening')) return; // 已在录音则忽略
+  const rec = new SR();
+  rec.lang = _lang === 'zh' ? 'zh-CN' : 'en-US';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  if (btn) btn.classList.add('listening');
+  rec.onresult = e => {
+    const el = document.getElementById(inputId);
+    if (el) {
+      // 去掉末尾句号、逗号等标点
+      const txt = e.results[0][0].transcript.replace(/[。，、,.!！?？\s]+$/u, '').trim();
+      el.value = txt;
+      el.dispatchEvent(new Event('input'));
+    }
+    if (btn) btn.classList.remove('listening');
+  };
+  rec.onerror = () => { if (btn) btn.classList.remove('listening'); };
+  rec.onend   = () => { if (btn) btn.classList.remove('listening'); };
+  rec.start();
+}
+
+/* ============================================================
+   模块十三：QR / 条形码扫描（html5-qrcode）
+   ============================================================ */
+let _qrScanner        = null;
+let _scanTarget       = null;
+let _qrLibReady       = false;
+let _scanExistingItemId = null;  // 扫码命中已有物资时，记录其 id，入库走追加接口
+
+(function loadQRLib() {
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
+  s.onload = () => { _qrLibReady = true; };
+  document.head.appendChild(s);
+})();
+
+async function openScan(inputId) {
+  if (!_qrLibReady) { toast(_lang==='zh'?'扫码库加载中，请稍后重试':'QR lib loading, please retry', 'warn'); return; }
+  _scanTarget = inputId;
+  openModal('modalScan');
+  await new Promise(r => setTimeout(r, 250)); // 等模态动画
+  const reader = document.getElementById('qr-reader');
+  if (!reader) return;
+  reader.innerHTML = '';
+  _qrScanner = new Html5Qrcode('qr-reader');
+  try {
+    await _qrScanner.start(
+      { facingMode: 'environment' },           // 优先后摄像头（手机）
+      { fps: 10, qrbox: { width: 260, height: 140 } },
+      async code => {
+        await closeScan();
+        const el = document.getElementById(_scanTarget);
+        if (el) { el.value = code; el.dispatchEvent(new Event('input')); }
+        // 库存搜索：扫码后自动查询
+        if (_scanTarget === 'invSearch') {
+          renderInventory();
+        }
+        // 录入编码 C 选项：若已存在则自动填充全部字段 + 切换为"追加入库"模式
+        else if (_scanTarget === 'ef_code') {
+          const data = await API.inventory({ q: code, page_size: 10 });
+          const found = data?.items?.find(i => i.code === code);
+          if (found) {
+            _scanExistingItemId = found.id;
+            // 填充核心字段
+            const MAP = {
+              name: found.name, category: found.category, spec: found.spec,
+              unit: found.unit, location: found.location, supplier: found.supplier,
+              price: found.price, expire: found.expire_date
+            };
+            for (const [fid, val] of Object.entries(MAP)) {
+              const el = document.getElementById('ef_' + fid);
+              if (el && val != null) el.value = val;
+            }
+            // 填充自定义字段（extra_data）
+            if (found.extra_data) {
+              try {
+                const extra = JSON.parse(found.extra_data);
+                for (const [k, v] of Object.entries(extra)) {
+                  const el = document.getElementById('ef_' + k);
+                  if (el && v != null) el.value = v;
+                }
+              } catch {}
+            }
+            // 切换提交按钮文字
+            const btn = document.getElementById('entrySubmitBtn');
+            if (btn) btn.innerHTML = `<i class="ti ti-plus"></i>${_lang==='zh'?'追加入库':'Add Stock'}`;
+            toast((_lang==='zh'?`已找到「${found.name}」，请填写追加数量`:`Found "${found.name}" — enter qty to add`), 'warn');
+          } else {
+            _scanExistingItemId = null;
+            toast(_lang==='zh'?'未找到此编码，请填写完整信息新建物资':'Code not found — fill in details to create a new item', 'warn');
+          }
+        }
+      },
+      () => {} // 帧错误不处理
+    );
+  } catch {
+    toast(_lang==='zh'?'无法访问摄像头，请检查浏览器权限':'Cannot access camera — check permissions', 'err');
+    closeModal('modalScan');
+  }
+}
+
+async function closeScan() {
+  if (_qrScanner) {
+    try { await _qrScanner.stop(); } catch {}
+    try { _qrScanner.clear(); } catch {}
+    _qrScanner = null;
+  }
+  closeModal('modalScan');
+  const reader = document.getElementById('qr-reader');
+  if (reader) reader.innerHTML = '';
+}
+
+/* ============================================================
+   模块十四：离线支持
+   ============================================================ */
+
+/* 处理离线队列（联网后自动调用） */
+async function processQueue() {
+  if (!navigator.onLine || !_token || !_offlineQueue.length) return;
+  const queue = [..._offlineQueue];
+  _offlineQueue = [];
+  _saveQueue();
+  _updateQueueBadge();
+  let ok = 0, fail = 0;
+  for (const op of queue) {
+    const result = await api(op.method, op.path, op.body, false);
+    if (result !== null) ok++;
+    else { _offlineQueue.push(op); fail++; }
+  }
+  _saveQueue();
+  _updateQueueBadge();
+  if (ok)   toast(T('syncOk').replace('{n}', ok));
+  if (fail) toast(T('syncFail').replace('{n}', fail), 'warn');
+  // 同步完成后刷新当前视图
+  if (ok && document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+}
+
+function setOnlineStatus(online) {
+  const dot = document.getElementById('onlineDot');
+  if (!dot) return;
+  dot.style.background = online ? '#1a9e5c' : '#dc2626';
+  dot.title = online ? T('onlineMode') : T('offlineMode');
+  if (online) setTimeout(processQueue, 800); // 上线后稍等再同步
+}
+
+window.addEventListener('online',  () => setOnlineStatus(true));
+window.addEventListener('offline', () => setOnlineStatus(false));
+
+// 手机侧边栏：点导航后自动关闭（事件委托）
+document.addEventListener('click', e => {
+  if (e.target.closest('.nav-item[data-page]')) {
+    document.querySelector('.sidebar')?.classList.remove('open');
+    document.getElementById('sidebarOverlay')?.classList.remove('open');
+  }
+});
+
+/* 注册 Service Worker（缓存 app shell，页面在服务器离线时仍可加载） */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+/* 页面初始化时应用语言（登录页） */
+document.addEventListener('DOMContentLoaded', ()=>{
+  _setTxt('loginLangBtn', T('langBtn'));
+  document.getElementById('loginUser').placeholder = T('phUser');
+  document.getElementById('loginPass').placeholder = T('phPass');
+  // 初始化在线状态
+  setOnlineStatus(navigator.onLine);
+  _updateQueueBadge();
+});
+
+/* ============================================================
+   模块十二：Excel 批量导入（管理员）
+   依赖 SheetJS，从 CDN 动态加载
+   ============================================================ */
+let _importTab = 'inventory';
+let _importRows = [];
+let _sheetJSReady = false;
+
+(function loadSheetJS() {
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  s.onload = () => { _sheetJSReady = true; };
+  document.head.appendChild(s);
+})();
+
+function switchImportTab(tab) {
+  _importTab = tab;
+  document.querySelectorAll('#importTabs .tab').forEach(el =>
+    el.classList.toggle('active', el.dataset.import === tab)
+  );
+  document.getElementById('importPreview').innerHTML = '';
+  document.getElementById('importFileInput').value = '';
+}
+
+/* ── 下载模板 ── */
+async function downloadTemplate() {
+  if (!_sheetJSReady) { toast(T('errImportNoSheetJS'), 'err'); return; }
+  if (_importTab === 'inventory') {
+    // 列头 = 所有字段 label（含 qty 作为入库数量）
+    const headers = _fields.map(f => f.label);
+    const example = {};
+    _fields.forEach(f => {
+      const eg = { text:'示例文字', number:'100', date:'2025-12-31',
+                   select: f.options ? f.options.split(',')[0].trim() : '' };
+      example[f.label] = eg[f.field_type] || '';
+    });
+    const ws = XLSX.utils.json_to_sheet([example], { header: headers });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '库存物资');
+    XLSX.writeFile(wb, _lang === 'en' ? 'inventory_template.xlsx' : '库存物资导入模板.xlsx');
+  } else {
+    const headers = ['账号ID', '姓名', '密码', '角色'];
+    const example = { '账号ID':'user01', '姓名':'张三', '密码':'123456', '角色':'user' };
+    const ws = XLSX.utils.json_to_sheet([example], { header: headers });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '用户账号');
+    XLSX.writeFile(wb, _lang === 'en' ? 'users_template.xlsx' : '用户账号导入模板.xlsx');
+  }
+}
+
+/* ── 读取文件 → 解析 → 弹出预览 ── */
+function handleImportFile(input) {
+  if (!input.files.length) return;
+  if (!_sheetJSReady) { toast(T('errImportNoSheetJS'), 'err'); return; }
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb   = XLSX.read(e.target.result, { type: 'array' });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      if (!rows.length) { toast(T('errImportEmpty'), 'err'); return; }
+      _importRows = rows;
+      showImportPreview(rows);
+      openModal('modalImport');
+    } catch(err) {
+      toast(T('toastImportFail'), 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showImportPreview(rows) {
+  if (!rows.length) return;
+  const headers    = Object.keys(rows[0]);
+  const previewRows = rows.slice(0, 10);
+  const more = rows.length > 10
+    ? `<tr><td colspan="${headers.length}" style="text-align:center;color:var(--text-muted);font-size:12px">... 共 ${rows.length} 行</td></tr>`
+    : '';
+  document.getElementById('importPreviewTable').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${previewRows.map(r=>`<tr>${headers.map(h=>`<td style="font-size:12px">${r[h]??''}</td>`).join('')}</tr>`).join('')}
+          ${more}
+        </tbody>
+      </table>
+    </div>`;
+  document.getElementById('importPreviewCount').textContent =
+    T('importPreviewCount').replace('{n}', rows.length);
+}
+
+/* ── 确认导入：逐条调 API ── */
+async function submitImport() {
+  if (!_importRows.length) return;
+  const btn = document.getElementById('importConfirmBtn');
+  setLoading(btn, true);
+
+  let ok = 0, fail = 0;
+  if (_importTab === 'inventory') {
+    const labelToField = {};
+    _fields.forEach(f => { labelToField[f.label] = f; });
+    for (const row of _importRows) {
+      const body = {};
+      for (const [col, val] of Object.entries(row)) {
+        const f = labelToField[col.trim()];
+        if (!f) continue;
+        const key = f.id === 'expire' ? 'expire_date' : f.id;
+        body[key] = f.field_type === 'number' ? (Number(val) || 0) : String(val);
+      }
+      body.qty = parseInt(body.qty) || 1;
+      if (!body.name) { fail++; continue; }
+      const result = await API.addItem(body);
+      result ? ok++ : fail++;
+    }
+  } else {
+    // 中英文列名均支持
+    const keyMap = {
+      '账号ID':'id', 'User ID':'id', 'userid':'id',
+      '姓名':'name', 'Name':'name',
+      '密码':'password', 'Password':'password',
+      '角色':'role', 'Role':'role'
+    };
+    for (const row of _importRows) {
+      const body = {};
+      for (const [col, val] of Object.entries(row)) {
+        const key = keyMap[col.trim()];
+        if (key) body[key] = String(val).trim();
+      }
+      if (!body.id || !body.name || !body.password) { fail++; continue; }
+      if (!['admin','user'].includes(body.role)) body.role = 'user';
+      const result = await API.addUser(body);
+      result ? ok++ : fail++;
+    }
+  }
+
+  setLoading(btn, false);
+  closeModal('modalImport');
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importPreview').innerHTML = '';
+  _importRows = [];
+
+  if (ok > 0) {
+    toast(T('toastImportOk').replace('{n}', ok));
+    if (_importTab === 'inventory') renderInventory();
+    else renderUserTable();
+  }
+  if (fail > 0) toast(`${fail} 条跳过/失败，请检查数据`, 'warn');
+}
+</script>
+</body>
+</html>

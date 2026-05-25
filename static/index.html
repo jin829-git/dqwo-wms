@@ -423,11 +423,11 @@
     </div>
     <div class="login-form-group">
       <label id="labelLoginPass">密码</label>
-      <input type="password" id="loginPass" value="123456" placeholder="请输入密码" data-ph-zh="请输入密码" data-ph-en="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="loginPass" value="" placeholder="请输入密码" data-ph-zh="请输入密码" data-ph-en="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="login-btn" onclick="doLogin()"><span id="loginBtnSpan"><i class="ti ti-login"></i> 登录系统</span></button>
     <div class="login-err" id="loginErr">账号或密码错误，请重试</div>
-    <div class="demo-hint" id="loginHint">演示账号：admin / 123456 &nbsp;|&nbsp; user / 123456</div>
+    <div class="demo-hint" id="loginHint"></div>
   </div>
 </div>
 
@@ -1272,7 +1272,7 @@ function _updateQueueBadge() {
 /* ============================================================
    模块一：API 层
    ============================================================ */
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = '';
 
 let _token = null;
 let _currentUser = null;
@@ -1386,7 +1386,7 @@ function statusBadge(st) {
 function switchLoginTab(role) {
   document.querySelectorAll('.login-tab').forEach((el,i)=>el.classList.toggle('active',(role==='admin'?0:1)===i));
   document.getElementById('loginUser').value = role;
-  document.getElementById('loginPass').value = '123456';
+  document.getElementById('loginPass').value = '';
 }
 
 async function doLogin() {
